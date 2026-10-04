@@ -47,6 +47,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_FILES_URL: ${{ vars.VITE_FILES_URL }}
         run: |
           missing=0
           if [[ -z "${VITE_SUPABASE_URL}" ]]; then
@@ -61,6 +62,10 @@ jobs:
             echo "::error::VITE_SUPABASE_URL should look like https://your-project.supabase.co."
             missing=1
           fi
+          if [[ -n "${VITE_FILES_URL}" && "${VITE_FILES_URL}" != https://* ]]; then
+            echo "::error::VITE_FILES_URL should be the https:// URL of the paperink-files Worker."
+            missing=1
+          fi
           exit "${missing}"
 
       - name: Build
@@ -69,6 +74,7 @@ jobs:
           BASE_PATH: ${{ steps.base.outputs.path }}
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_FILES_URL: ${{ vars.VITE_FILES_URL }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

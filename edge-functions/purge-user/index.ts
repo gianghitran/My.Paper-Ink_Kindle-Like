@@ -34,6 +34,20 @@ export async function purgeUserObjects(storage: StorageLike, userId: string) {
   return own.length
 }
 
+export async function purgeR2(env: (k: string) => string | undefined, userId: string, fetcher: typeof fetch = fetch) {
+  const url = env('FILES_URL')?.replace(/\/+$/, '')
+  const secret = env('FILES_PURGE_SECRET')
+  if (!url || !secret) return null
+  const res = await fetcher(`${url}/purge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+    body: JSON.stringify({ user_id: userId }),
+  })
+  if (!res.ok) throw new Error(`r2 purge: ${res.status}`)
+  const body = (await res.json()) as { removed?: number }
+  return body.removed ?? 0
+}
+
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 function sameSecret(a: string, b: string) {
@@ -61,12 +75,13 @@ export async function handle(req: Request, env: (k: string) => string | undefine
 
   try {
     const removed = await purgeUserObjects(admin.storage.from(BUCKET) as unknown as StorageLike, userId)
+    const r2Removed = await purgeR2(env, userId)
     const { error: delError } = await admin.auth.admin.deleteUser(userId)
 
     const userDeleted = !delError || /not.?found/i.test(delError.message)
     if (!userDeleted) console.error('purge-user: auth delete failed', userId, delError?.message)
-    console.log('purge-user', userId, 'objects removed:', removed)
-    return json(userDeleted ? 200 : 500, { removed, userDeleted })
+    console.log('purge-user', userId, 'objects removed:', removed, 'r2 objects removed:', r2Removed)
+    return json(userDeleted ? 200 : 500, { removed, r2Removed, userDeleted })
   } catch (err) {
     console.error('purge-user failed', userId, (err as Error).message)
     return json(500, { error: 'purge failed' })

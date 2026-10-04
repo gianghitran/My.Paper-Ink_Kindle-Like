@@ -17,6 +17,8 @@ export const supabase: SupabaseClient = createClient(supabaseConfigured ? url! :
 
 export const STORAGE_BUCKET = 'documents'
 
+export const FILES_URL = ((import.meta.env.VITE_FILES_URL as string | undefined)?.trim() ?? '').replace(/\/+$/, '')
+
 export function appBaseUrl() {
   const path = location.pathname.replace(/index\.html$/, '')
   return `${location.origin}${path}`
