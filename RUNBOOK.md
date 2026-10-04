@@ -31,6 +31,7 @@ The workflow sets `BASE_PATH=/<repository>/`, or `/` for `<username>.github.io` 
 1. **Database**: the schema — tables, constraints, indexes, RLS policies, the private `documents` bucket and its Storage policies — is already deployed in the project (Dashboard → Database / Storage). Keep RLS enabled on every table.
    Then run [`sql/profiles-display-name.sql`](sql/profiles-display-name.sql) once in the SQL Editor: it stores each account's username in `profiles.display_name` (new accounts through the sign-up trigger, existing ones backfilled) and makes that column read-only for clients.
    Also run [`sql/koreader-highlights.sql`](sql/koreader-highlights.sql) once: it adds `highlights.tags` and `highlights.drawer` (KOReader highlight styles) and removes the old text-pinned notes without a highlight. Until it runs, highlights still save but their style/tags stay on this device only.
+   Also run [`sql/remove-upload-limit.sql`](sql/remove-upload-limit.sql) once: it removes the 200 MB cap on `documents.size_bytes` (files in R2 have no size limit). The legacy Supabase `documents` bucket keeps its own 200 MB limit; it is only used when `VITE_FILES_URL` is not set.
    **Deleting a user's files with the profile** (deleting a row in `profiles` — or the auth user, which cascades to it — removes everything under `documents/{user_id}/` and the account):
    1. Dashboard → **Edge Functions** → Deploy a new function → *Via editor*, name it `purge-user`, paste [`edge-functions/purge-user/index.ts`](edge-functions/purge-user/index.ts), and turn **Verify JWT off** (the trigger authenticates with its own secret).
    2. Run [`sql/purge-user-storage.sql`](sql/purge-user-storage.sql) in the SQL Editor (enables `pg_net`, creates the secret in Vault and the `AFTER DELETE` trigger).
@@ -72,7 +73,7 @@ Without `VITE_FILES_URL` the app keeps using the Supabase Storage bucket, so not
 **Local development.** `cd workers/files && npm run dev` starts the Worker on port 8787 with a local, on-disk R2. Put `FILES_PURGE_SECRET=<random hex>` in `workers/files/.dev.vars` (git-ignored) and `VITE_FILES_URL=http://localhost:8787` in `.env.local`.
 
 Limits enforced by the Worker:
-- 200 MB per file;
+- no size limit per file (R2 allows up to 10,000 parts of 50 MB, about 488 GB);
 - PDF, EPUB, comic and JPEG types only;
 - no overwrites;
 - files over 90 MB are uploaded in 50 MB parts, because of the Workers request-size limit.
@@ -112,7 +113,7 @@ src/
   - only allows keys under `{user_id}/`;
   - requires a document row that RLS shows to the caller before any write.
 
-  Uploads are limited to 200 MB, to PDF/EPUB/comic/JPEG types, and can't overwrite existing files. The purge endpoint only accepts a server-side shared secret. The legacy Supabase `documents` bucket keeps its policies: private, `{auth.uid()}/…` only, uploads need a matching document row.
+  Uploads are limited to PDF/EPUB/comic/JPEG types (no size limit), and can't overwrite existing files. The purge endpoint only accepts a server-side shared secret. The legacy Supabase `documents` bucket keeps its policies: private, `{auth.uid()}/…` only, uploads need a matching document row.
 - **No roles**: there are no admin/moderator flags or privilege levels. The `service_role` key is never used by the app.
 - Passwords and tokens are never logged. User-controlled text is length-checked in the UI and by database CHECK constraints.
 - Imported documents are untrusted:

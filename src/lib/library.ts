@@ -2,7 +2,7 @@ import { db } from './db'
 import { sha256Hex } from './hash'
 import { detectFormat, titleFromFileName } from './formats'
 import { clearDeviceCache } from './services/deviceCache'
-import { MAX_UPLOAD_BYTES, cacheObject, clearFileCache, downloadObject, objectPath, removeObjects, uploadObject } from './services/storage'
+import { cacheObject, clearFileCache, downloadObject, objectPath, removeObjects, uploadObject } from './services/storage'
 import { flush } from './cloud/sync'
 import { supabase } from './supabase/client'
 import { uid } from './utils'
@@ -16,9 +16,6 @@ export type ImportResult =
 
 export async function importFile(file: File): Promise<ImportResult> {
   try {
-    if (file.size > MAX_UPLOAD_BYTES) {
-      return { status: 'error', fileName: file.name, message: 'This file is larger than the 200 MB upload limit.' }
-    }
     const buffer = await file.arrayBuffer()
     const handler = detectFormat(file, new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 1024)))
     if (!handler) {
@@ -48,7 +45,6 @@ export async function importFile(file: File): Promise<ImportResult> {
 
     const mimeType = stored ? 'application/epub+zip' : handler.mimeTypes[0]
     const blob = stored ? new Blob([stored], { type: mimeType }) : new Blob([buffer], { type: mimeType })
-    if (blob.size > MAX_UPLOAD_BYTES) return { status: 'error', fileName: file.name, message: 'The converted book is larger than the 200 MB upload limit.' }
     const id = uid()
     const storedName = stored ? `${titleFromFileName(file.name) || 'book'}.epub` : file.name
     const doc: DocumentRecord = {

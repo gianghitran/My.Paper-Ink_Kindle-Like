@@ -64,6 +64,7 @@ export async function getCachedFile(path: string): Promise<Blob | null> {
 }
 
 export async function putCachedFile(path: string, blob: Blob) {
+  if (blob.size > MAX_BYTES / 2) return
   try {
     const bytes = await blob.arrayBuffer()
     await run(FILES, 'readwrite', (s) => s.put({ path, bytes, type: blob.type } satisfies FileEntry))

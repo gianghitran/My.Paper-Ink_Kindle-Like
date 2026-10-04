@@ -1,8 +1,6 @@
 import { getCachedFile, putCachedFile, removeCachedFiles } from './deviceCache'
 import { FILES_URL, STORAGE_BUCKET, supabase } from '@/lib/supabase/client'
 
-export const MAX_UPLOAD_BYTES = 200 * 1024 * 1024
-
 const ALLOWED_TYPES = new Set([
   'application/pdf',
   'application/epub+zip',
@@ -102,7 +100,6 @@ async function migrateToR2(path: string, blob: Blob) {
 
 export async function uploadObject(path: string, blob: Blob, contentType: string) {
   if (!ALLOWED_TYPES.has(contentType)) throw new Error(`File type not allowed: ${contentType}`)
-  if (blob.size > MAX_UPLOAD_BYTES) throw new Error('File is larger than 200 MB')
   if (FILES_URL) return r2Upload(path, blob, contentType)
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType, upsert: false, cacheControl: '3600' })
   if (error) throw new Error(error.message)

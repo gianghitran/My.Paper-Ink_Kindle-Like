@@ -125,7 +125,7 @@ export default function SettingsPage() {
         </Section>
 
         <Section title="Cloud library" icon={<Cloud />} description="Files are stored in your private cloud storage; only you can access them.">
-          <p className="text-[14px]">{formatBytes(totalDocBytes)} in {docs?.length ?? 0} documents (limit 200 MB per file).</p>
+          <p className="text-[14px]">{formatBytes(totalDocBytes)} in {docs?.length ?? 0} documents.</p>
           <DeviceCacheRow />
           <div>
             <p className="mb-2 text-[13px] text-muted-foreground">

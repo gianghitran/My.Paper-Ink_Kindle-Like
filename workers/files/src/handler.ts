@@ -42,10 +42,9 @@ export interface Env {
   FILES_PURGE_SECRET?: string
 }
 
-export const MAX_FILE_BYTES = 200 * 1024 * 1024
 export const PART_BYTES = 50 * 1024 * 1024
 export const SINGLE_PUT_MAX = 90 * 1024 * 1024
-const MAX_PARTS = Math.ceil(MAX_FILE_BYTES / PART_BYTES)
+const MAX_PARTS = 10000
 
 export const ALLOWED_TYPES = new Set([
   'application/pdf',
@@ -233,7 +232,8 @@ export async function handle(req: Request, env: Env, fetcher: AuthFetch = fetch)
   if (url.pathname === '/mpu/create' && req.method === 'POST') {
     if (!ALLOWED_TYPES.has(contentType)) return json(415, { error: `file type not allowed: ${contentType}` }, cors)
     const size = Number(url.searchParams.get('size'))
-    if (!Number.isFinite(size) || size <= 0 || size > MAX_FILE_BYTES) return json(413, { error: 'file is larger than 200 MB' }, cors)
+    if (!Number.isFinite(size) || size <= 0) return json(400, { error: 'size required' }, cors)
+    if (size > PART_BYTES * MAX_PARTS) return json(413, { error: 'file is too large for a multipart upload' }, cors)
     if (await env.BUCKET.head(target.key)) return json(409, { error: 'object already exists' }, cors)
     const mpu = await env.BUCKET.createMultipartUpload(target.key, { httpMetadata: { contentType, cacheControl: 'private, no-store' } })
     return json(200, { uploadId: mpu.uploadId, partSize: PART_BYTES }, cors)
@@ -257,10 +257,6 @@ export async function handle(req: Request, env: Env, fetcher: AuthFetch = fetch)
     const parts = Array.isArray(body?.parts) ? body.parts.filter((p) => Number.isInteger(p?.partNumber) && typeof p?.etag === 'string') : []
     if (!parts.length || parts.length > MAX_PARTS) return json(400, { error: 'invalid parts' }, cors)
     const obj = await mpu.complete(parts)
-    if (obj.size > MAX_FILE_BYTES) {
-      await env.BUCKET.delete(obj.key)
-      return json(413, { error: 'file is larger than 200 MB' }, cors)
-    }
     return json(201, { key: obj.key }, cors)
   }
 
