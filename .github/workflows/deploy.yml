@@ -35,19 +35,40 @@ jobs:
         shell: bash
         run: |
           repo="${GITHUB_REPOSITORY#*/}"
-          
+
           if [[ "$repo" == *.github.io ]]; then
             echo "path=/" >> "$GITHUB_OUTPUT"
           else
             echo "path=/${repo}/" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify Supabase environment
+        shell: bash
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          missing=0
+          if [[ -z "${VITE_SUPABASE_URL}" ]]; then
+            echo "::error::Missing repository variable VITE_SUPABASE_URL. Add it under Settings > Secrets and variables > Actions > Variables."
+            missing=1
+          fi
+          if [[ -z "${VITE_SUPABASE_ANON_KEY}" ]]; then
+            echo "::error::Missing VITE_SUPABASE_ANON_KEY. Add it under Settings > Secrets and variables > Actions > Variables or Secrets."
+            missing=1
+          fi
+          if [[ "${VITE_SUPABASE_URL}" != https://*.supabase.co ]]; then
+            echo "::error::VITE_SUPABASE_URL should look like https://your-project.supabase.co."
+            missing=1
+          fi
+          exit "${missing}"
+
       - name: Build
         run: npm run build
         env:
           BASE_PATH: ${{ steps.base.outputs.path }}
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
