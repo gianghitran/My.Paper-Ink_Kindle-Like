@@ -4,7 +4,6 @@ import { HIGHLIGHT_COLORS, hlSolid } from '@/lib/annotations'
 import { cn, isCoarsePointer } from '@/lib/utils'
 import type { HighlightColor, HighlightDrawer } from '@/types'
 
-
 export const DRAWERS: { id: HighlightDrawer; label: string; icon: typeof Highlighter }[] = [
   { id: 'lighten', label: 'Lighten', icon: Highlighter },
   { id: 'underscore', label: 'Underline', icon: Underline },
@@ -14,31 +13,27 @@ export const DRAWERS: { id: HighlightDrawer; label: string; icon: typeof Highlig
 
 interface Props {
   rect: { left: number; top: number; width: number; height: number }
-  
+
   activeColor?: HighlightColor
   onColor: (c: HighlightColor) => void
-  
+
   drawer?: HighlightDrawer
   onDrawer?: (d: HighlightDrawer) => void
-  
+
   onAdjust?: (side: 0 | 1, dir: -1 | 1, byChar: boolean) => void
-  
+
   onExtend?: () => void
-  
+
   onSelectMode?: () => void
   onNote: () => void
   onNode: () => void
   onCopy: () => void
-  
+
   onLookup?: () => void
   onDelete?: () => void
   onClose: () => void
   noteLabel?: string
 }
-
-
-
-
 
 export function AnnotationToolbar({ rect, activeColor, onColor, drawer, onDrawer, onAdjust, onExtend, onSelectMode, onNote, onNode, onCopy, onLookup, onDelete, onClose, noteLabel = 'Note' }: Props) {
   const ref = useRef<HTMLDivElement>(null)
@@ -59,7 +54,6 @@ export function AnnotationToolbar({ rect, activeColor, onColor, drawer, onDrawer
     setPos({ left, top })
   }, [rect, coarse])
 
-  
   const keep = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault()
   const btn =
     'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 text-[11px] font-medium text-foreground hover:bg-muted [&_svg]:size-[18px]'
@@ -172,10 +166,6 @@ export function AnnotationToolbar({ rect, activeColor, onColor, drawer, onDrawer
     </div>
   )
 }
-
-
-
-
 
 function AdjustRow({ onAdjust }: { onAdjust: (side: 0 | 1, dir: -1 | 1, byChar: boolean) => void }) {
   const [byChar, setByChar] = useState(false)

@@ -1,4 +1,4 @@
-import { ensureKaleidoFilter, ensureToneFilter, inkTone, lightTint, paperWhite } from '@/lib/einkColor'
+import { applyScreenLayers, ensureKaleidoFilter, ensureToneFilter, inkTone, lightTint, paperWhite, screenLayerSpec, svgFilterUnreliable } from '@/lib/einkColor'
 import { create } from 'zustand'
 import { db } from '@/lib/db'
 import { debounce } from '@/lib/utils'
@@ -10,7 +10,6 @@ export type InkMode = 'mono' | 'color'
 export type InkScreen = 'off' | InkMode
 export type EpubFont = 'publisher' | 'serif' | 'sans' | 'humanist' | 'mono'
 export type LibrarySort = 'lastOpened' | 'added' | 'title' | 'author' | 'progress'
-
 
 export type PageTurn = 'flip' | 'slide' | 'none'
 
@@ -24,26 +23,26 @@ export interface InkSettings {
   penColor: string
   highlighterColor: string
   size: InkSize
-  
+
   fingerDraws: boolean
 }
 
 export interface EpubSettings {
   font: EpubFont
-  
+
   fontSize: number
   lineHeight: number
-  
+
   margin: number
-  
+
   paragraphSpacing: number
   justify: boolean
   flow: 'paginated' | 'scrolled'
-  
+
   spread: 'auto' | 'none'
-  
+
   boldness: number
-  
+
   wordSpacing: number
 }
 
@@ -62,29 +61,28 @@ export interface AppSettings {
   libraryView: 'grid' | 'list'
   librarySort: LibrarySort
   lastHighlightColor: HighlightColor
-  
+
   highlightDrawer: HighlightDrawer
-  
+
   noteMarker: NoteMarker
   tapZones: boolean
   ink: InkSettings
   pageTurn: PageTurn
   twoPage: TwoPage
-  
+
   pdfCoverAlone: boolean
-  
+
   trimMargins: boolean
-  
+
   comicRtl: boolean
-  
+
   pageContrast: number
-  
+
   statusBar: { timeLeftChapter: boolean; timeLeftBook: boolean; clock: boolean; battery: boolean }
   readAloud: { rate: number; voiceURI: string | null }
-  
+
   lookup: { wikiLang: string; translateTo: string }
-  
-  
+
   inkFilter: { enabled: boolean; grain: boolean; mode: InkMode;  tone: number;  warmth: number }
 }
 
@@ -144,7 +142,6 @@ interface SettingsState {
   updateInk: (patch: Partial<InkSettings>) => void
   replace: (s: AppSettings) => void
 }
-
 
 let settingsDirty = false
 const persist = debounce((s: AppSettings) => {
@@ -211,10 +208,9 @@ export function mergeSettings(raw: unknown): AppSettings {
       }
     })(),
   }
-  
+
   return merged.inkFilter.enabled ? { ...merged, theme: INK_BASE_THEME[merged.inkFilter.mode] } : merged
 }
-
 
 export function flushSettings() {
   persist.flush()
@@ -236,16 +232,12 @@ export function applyTheme(theme: Theme) {
 
 const toHex = (rgb: number[]) => `#${rgb.map((v) => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('')}`
 
-
-
-
-
 export function screenChromeColor(s: Pick<AppSettings, 'theme' | 'inkFilter'>) {
   const base = THEME_META[s.theme].themeColor
   if (!s.inkFilter.enabled) return base
   const t = inkTone(s.inkFilter.tone)
   if (s.inkFilter.mode === 'color') return toHex(paperWhite(s.inkFilter.warmth).map((w) => w * t.bg * 255))
-  
+
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(base.slice(i, i + 2), 16))
   const y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
   const gray = Math.min(1, ((y - 0.5) * 1.08 + 0.5) * 0.99)
@@ -257,25 +249,27 @@ export function applyChromeColor(s: Pick<AppSettings, 'theme' | 'inkFilter'>) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', screenChromeColor(s))
 }
 
-
 export function wantsTwoPages(setting: TwoPage, width: number, height: number) {
   if (!width || !height || setting === 'off') return false
   if (setting === 'landscape') return width > height * 1.05
   return width / height >= 1.3 && width >= 800
 }
 
-
 export function applyInkFilter(f: AppSettings['inkFilter']) {
   const el = document.documentElement
-  
-  if (f.enabled && f.mode === 'color') el.style.filter = `url(#${ensureKaleidoFilter(f.tone, f.warmth)})`
+  if (svgFilterUnreliable()) {
+    const toned = f.enabled && (f.mode === 'color' || f.tone > 0 || f.warmth !== 0)
+    applyScreenLayers(toned ? screenLayerSpec(f.mode, f.tone, f.warmth) : null)
+    if (toned) el.style.filter = 'none'
+    else el.style.removeProperty('filter')
+  } else if (f.enabled && f.mode === 'color') el.style.filter = `url(#${ensureKaleidoFilter(f.tone, f.warmth)})`
   else if (f.enabled && (f.tone > 0 || f.warmth !== 0))
     el.style.filter = `grayscale(1) contrast(1.08) brightness(0.99) url(#${ensureToneFilter(f.tone, f.warmth)})`
   else el.style.removeProperty('filter') 
   if (f.enabled) {
     el.dataset.inkFilter = f.grain ? 'grain' : 'plain'
     el.dataset.inkMode = f.mode
-    
+
     if (f.mode === 'mono' && (f.tone > 0 || f.warmth !== 0)) el.dataset.inkToned = ''
     else delete el.dataset.inkToned
   } else {
@@ -286,11 +280,6 @@ export function applyInkFilter(f: AppSettings['inkFilter']) {
 }
 
 export const inkScreenOf = (f: AppSettings['inkFilter']): InkScreen => (f.enabled ? f.mode : 'off')
-
-
-
-
-
 
 export type ReadingMode = Theme | 'ink-mono' | 'ink-color'
 export const INK_BASE_THEME: Record<InkMode, Theme> = { mono: 'eink', color: 'light' }
@@ -306,10 +295,8 @@ export function withReadingMode(s: Pick<AppSettings, 'inkFilter'>, mode: Reading
   return { theme: mode, inkFilter: { ...s.inkFilter, enabled: false } }
 }
 
-
 export const withInkScreen = (s: Pick<AppSettings, 'theme' | 'inkFilter'>, screen: InkScreen): Pick<AppSettings, 'theme' | 'inkFilter'> =>
   screen === 'off' ? { theme: s.theme, inkFilter: { ...s.inkFilter, enabled: false } } : withReadingMode(s, screen === 'color' ? 'ink-color' : 'ink-mono')
-
 
 export function applyRemoteSettings(raw: unknown) {
   if (!raw || settingsDirty) return
@@ -317,7 +304,6 @@ export function applyRemoteSettings(raw: unknown) {
   if (JSON.stringify(next) === JSON.stringify(useSettings.getState().settings)) return
   useSettings.setState({ settings: next })
 }
-
 
 export function isEinkLike(s: Pick<AppSettings, 'theme' | 'inkFilter'>) {
   return s.theme === 'eink' || s.inkFilter.enabled

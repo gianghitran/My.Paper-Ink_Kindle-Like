@@ -24,7 +24,7 @@ export async function extractEpubMetadata(data: ArrayBuffer, fileName: string): 
       cover,
     }
   } finally {
-    
+
     void book.opened.catch(() => {}).finally(() => book.destroy())
   }
 }

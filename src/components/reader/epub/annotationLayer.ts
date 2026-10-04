@@ -2,17 +2,6 @@ import type { Contents } from 'epubjs'
 import { hlRgba } from '@/lib/annotations'
 import type { Highlight, NoteMarker } from '@/types'
 
-
-
-
-
-
-
-
-
-
-
-
 export interface VisibleBox {
   id: string
   left: number
@@ -30,13 +19,12 @@ interface ViewLike {
 export interface PaintOptions {
   theme: string
   noteMarker: NoteMarker
-  
+
   layout: { delta: number; gap: number } | null
 }
 
 const LAYER = 'pi-ann'
 const NS = 'pi-ann-box'
-
 
 function lineBoxes(rects: DOMRect[]) {
   const lines: { left: number; right: number; top: number; bottom: number }[] = []
@@ -64,7 +52,6 @@ function box(layer: HTMLElement, css: Partial<CSSStyleDeclaration>, id = '', kin
   return d
 }
 
-
 export function paintView(view: ViewLike, highlights: Highlight[], opts: PaintOptions): VisibleBox[] {
   const { element, iframe, contents } = view
   if (!element || !iframe || !contents?.document) return []
@@ -76,7 +63,7 @@ export function paintView(view: ViewLike, highlights: Highlight[], opts: PaintOp
     Object.assign(layer.style, { position: 'absolute', pointerEvents: 'none', zIndex: '2', overflow: 'visible' })
     element.appendChild(layer)
   }
-  
+
   Object.assign(layer.style, {
     left: `${iframe.offsetLeft}px`,
     top: `${iframe.offsetTop}px`,
@@ -102,7 +89,7 @@ export function paintView(view: ViewLike, highlights: Highlight[], opts: PaintOp
     const solid = hlRgba(h.color, opts.theme)
     const drawer = h.drawer ?? 'lighten'
     lines.forEach((l, i) => {
-      
+
       const left = l.left
       const top = l.top
       const width = l.right - l.left
@@ -129,11 +116,11 @@ export function paintView(view: ViewLike, highlights: Highlight[], opts: PaintOp
       if (!h.hasNote || opts.noteMarker === 'none') return
       const ink = dark ? '#d6d0c4' : '#2b2620'
       if (opts.noteMarker === 'underline') {
-        
+
         box(layer!, { left: `${left}px`, top: `${top + height}px`, width: `${width}px`, height: '0', borderBottom: `2px dotted ${ink}` }, h.id, 'note-underline')
         return
       }
-      
+
       if (opts.noteMarker === 'sidemark' && i > 0) return
       const margin = marginX(left, contents, opts)
       if (opts.noteMarker === 'sideline') {
@@ -151,7 +138,6 @@ export function paintView(view: ViewLike, highlights: Highlight[], opts: PaintOp
   return out
 }
 
-
 function marginX(x: number, contents: Contents, opts: PaintOptions) {
   if (opts.layout && opts.layout.delta > 0) {
     const col = Math.floor(x / opts.layout.delta) * opts.layout.delta
@@ -161,7 +147,6 @@ function marginX(x: number, contents: Contents, opts: PaintOptions) {
   const pad = parseFloat(getComputedStyle(body).paddingLeft) || 16
   return body.getBoundingClientRect().left + Math.max(6, pad / 2)
 }
-
 
 export function hitBoxes(boxes: VisibleBox[], x: number, y: number, slop = 3): string[] {
   const ids: string[] = []

@@ -3,7 +3,7 @@ import type { ReadingSession } from '@/types'
 export interface DocStats {
   totalMs: number
   sessions: number
-  
+
   rate: number | null
   lastRead: number | null
 }
@@ -16,7 +16,7 @@ export function docStats(sessions: ReadingSession[]): DocStats {
   for (const s of sessions) {
     totalMs += s.ms
     const d = s.progressEnd - s.progressStart
-    
+
     if (d > 0 && d < 0.5 && s.ms > 20_000) {
       gained += d
       gainMs += s.ms

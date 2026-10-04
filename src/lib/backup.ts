@@ -25,7 +25,6 @@ interface BackupFile {
   settings: unknown
 }
 
-
 export async function exportBackup() {
   const [documents, readingStates, highlights, notes, nodes, edges, settings, inks, bookmarks, vocab, sessions] = await Promise.all([
     db.documents.toArray(),
@@ -77,7 +76,6 @@ const arr = <T>(v: unknown, check: (x: Record<string, unknown>) => boolean): T[]
   Array.isArray(v) ? (v.filter((x) => isObj(x) && check(x)) as T[]) : []
 const str = (v: unknown) => typeof v === 'string' && v.length > 0
 
-
 export async function importBackup(file: File): Promise<ImportSummary> {
   let raw: unknown
   try {
@@ -98,9 +96,6 @@ export async function importBackup(file: File): Promise<ImportSummary> {
   const sessions = arr<ReadingSession>(raw.sessions, (x) => str(x.id) && str(x.docId))
   const inks = arr<InkPage>(raw.inks, (k) => str(k.id) && str(k.docId) && typeof k.page === 'number' && Array.isArray(k.strokes))
 
-  
-  
-  
   const library = await db.documents.toArray()
   const byHash = new Map(library.map((d) => [d.contentHash, d.id]))
   const docMap = new Map<string, string>()
@@ -195,7 +190,6 @@ export async function importBackup(file: File): Promise<ImportSummary> {
   }
 }
 
-
 function noteBody(n: Note) {
   const ink = n.ink?.strokes.length ? '_(handwritten note — view in PaperInk)_' : ''
   return [n.content.trim(), ink].filter(Boolean).join('\n\n')
@@ -252,7 +246,7 @@ export async function exportAllMarkdown() {
   for (const d of docs) {
     const hasAny = (await db.highlights.where('docId').equals(d.id).count()) + (await db.notes.where('docId').equals(d.id).count())
     if (!hasAny) continue
-    
+
     parts.push((await documentMarkdown(d.id)).replace(/^(#+) /gm, '#$1 '), '', '---', '')
   }
   const standalone = await db.notes.filter((n) => !n.docId).toArray()

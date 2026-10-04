@@ -61,7 +61,6 @@ import type { PdfView } from './pdf/PdfReader'
 import type { InkBinding, ReaderHandle, ReaderPosition, ReaderProps, SelectionInfo, TocItem } from './types'
 import type { Anchor, DocumentRecord, Highlight, HighlightColor, HighlightDrawer, ReadingState } from '@/types'
 
-
 const PdfReader = lazy(() => import('./pdf/PdfReader'))
 const EpubReader = lazy(() => import('./epub/EpubReader'))
 
@@ -69,7 +68,7 @@ type Loaded = {
   doc: DocumentRecord
   file: Blob
   state?: ReadingState
-  
+
   anchor?: Anchor
   linkKey?: string
 }
@@ -160,7 +159,6 @@ const QUICK_BACKGROUNDS: { theme: Theme; label: string }[] = [
   { theme: 'dark', label: 'Dark background' },
 ]
 
-
 function QuickBackground({ tabIndex }: { tabIndex: number }) {
   const settings = useSettings((s) => s.settings)
   const update = useSettings((s) => s.update)
@@ -216,8 +214,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
   const [chrome, setChrome] = useState(true)
   const [position, setPosition] = useState<ReaderPosition>({ label: '', progress: initialState?.progress ?? 0 })
   const [toc, setToc] = useState<TocItem[] | null>(null)
-  const [toolbar, setToolbarRaw] = useState<ToolbarState | null>(null)
-  const setToolbar: typeof setToolbarRaw = (v) => { console.log("[dbg] setToolbar", typeof v === "function" ? "fn" : v ? "set" : "null", (new Error().stack ?? "").split("\n").slice(2, 5).join(" | ")); setToolbarRaw(v) }
+  const [toolbar, setToolbar] = useState<ToolbarState | null>(null)
   const [noteDraft, setNoteDraft] = useState<NoteDraft | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelTab, setPanelTab] = useState<PanelTab>('contents')
@@ -227,7 +224,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
   const docInk = useDocInk(docId)
   const [lookupReq, setLookupReq] = useState<LookupRequest | null>(null)
   const [footnote, setFootnote] = useState<{ text: string; href: string } | null>(null)
-  
+
   const [backStack, setBackStack] = useState<Anchor[]>([])
   const bookmarks = useLiveQuery(() => db.bookmarks.where('docId').equals(docId).toArray(), [docId]) ?? []
   const [scale, setScale] = useState(1)
@@ -249,11 +246,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     ) ?? []
   const docNotes = useLiveQuery(() => db.notes.where('docId').equals(docId).toArray(), [docId]) ?? []
   const notesByHighlight = useMemo(() => new Map(docNotes.filter((n) => n.highlightId).map((n) => [n.highlightId!, n])), [docNotes])
-  
-  
-
-
-
 
   const [selectMode, setSelectMode] = useState<{ item: Highlight; tmp: boolean } | null>(null)
   const selectModeRef = useRef(selectMode)
@@ -264,13 +256,13 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
   }, [highlights, notesByHighlight, selectMode])
   const [peek, setPeek] = useState<{ noteId: string; quote?: string; highlightId?: string; rect?: SelectionInfo['rect'] } | null>(null)
   const [chooser, setChooser] = useState<{ hits: Highlight[]; rect: SelectionInfo['rect'] } | null>(null)
-  
+
   useEffect(() => {
     if (noteDraft) setPeek(null)
   }, [noteDraft])
   const notesByHighlightRef = useRef(notesByHighlight)
   notesByHighlightRef.current = notesByHighlight
-  
+
   const openAnnotation = useCallback((h: Highlight, rect: SelectionInfo['rect']) => {
     const n = notesByHighlightRef.current.get(h.id)
     if (n) {
@@ -303,7 +295,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     handle.current?.goToAnchor(last)
   }
 
-  
   const bookmarkHere = ready ? bookmarks.find((b) => handle.current?.isAnchorVisible(b.anchor)) : undefined
   const toggleBookmark = async () => {
     if (bookmarkHere) {
@@ -319,7 +310,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     await db.bookmarks.add({ id: uid('b'), docId, anchor, label, progress: position.progress, createdAt: Date.now() })
   }
 
-  
   const pending = useRef<{ state: Pick<ReadingState, 'progress' | 'pdf' | 'epub'>; label: string } | null>(null)
   const flush = useCallback(async () => {
     const p = pending.current
@@ -344,7 +334,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     }
   }, [saveDebounced])
 
-  
   const hlParam = params.get('hl')
   const noteParam = params.get('note') ?? params.get('vocab')
   const consumedLink = useRef(linkKey ?? null)
@@ -362,7 +351,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     setParams(next, { replace: true })
   }, [ready, hlParam, noteParam]) 
 
-  
   useEffect(() => {
     if (!ready) return
     const t = setTimeout(() => setChrome(false), 2200)
@@ -375,7 +363,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     return () => document.removeEventListener('fullscreenchange', onFs)
   }, [])
 
-  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
@@ -392,7 +379,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
         }
       }
       if (t && (t.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]') || e.metaKey || e.ctrlKey || e.altKey)) return
-      
+
       const rtl = doc.format === 'comic' && useSettings.getState().settings.comicRtl
       if (e.key === 'PageDown' || e.key === (rtl ? 'ArrowLeft' : 'ArrowRight')) {
         e.preventDefault()
@@ -412,7 +399,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     return () => window.removeEventListener('keydown', onKey)
   }, [doc.format, pdfView.mode, inkMode, docInk.undo, docInk.redo])
 
-  
   const inkSettings = settings.ink
   const inkBinding: InkBinding = useMemo(
     () => ({
@@ -434,13 +420,12 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     setChrome(false)
     setInkMode(true)
   }
-  
+
   const startHandwrittenNote = () => {
     const location = handle.current?.getLocation() ?? undefined
     setNoteDraft({ docId, location, initialTab: 'draw' })
   }
 
-  
   const onSelection = useCallback((sel: SelectionInfo | null) => {
     const mode = selectModeRef.current
     if (sel && mode) {
@@ -452,7 +437,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
       return { rect: sel.rect, selection: sel }
     })
   }, [])
-  
+
   const extendSelection = async (mode: { item: Highlight; tmp: boolean }, sel: SelectionInfo) => {
     const span = await handle.current?.spanAnchors?.(mode.item.anchor, sel.anchor)
     setSelectMode(null)
@@ -462,12 +447,11 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
       return
     }
     if (mode.tmp) {
-      
-      
+
       setToolbar({ rect: sel.rect, selection: { text: span.text, anchor: span.anchor, order: span.order, rect: sel.rect } })
       return
     }
-    
+
     handle.current?.clearSelection()
     await db.highlights.update(mode.item.id, { anchor: span.anchor, text: span.text, order: span.order, updatedAt: Date.now() })
     toast.success('Highlight extended')
@@ -508,7 +492,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
           toast('Selection cancelled')
           return
         }
-        
+
         if (hits.length > 1) {
           setToolbar(null)
           setPeek(null)
@@ -531,7 +515,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
     onFootnote: useCallback((n: { text: string; href: string }) => setFootnote(n), []),
   }
 
-  
   const makeHighlight = async (sel: SelectionInfo, color: HighlightColor) => {
     const h = await createHighlight({ docId, anchor: sel.anchor, text: sel.text, color, order: sel.order, drawer: settings.highlightDrawer })
     update({ lastHighlightColor: color })
@@ -571,7 +554,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
       if (!res) return
       const order = h.anchor.type === 'pdf' && res.anchor.type === 'pdf' ? res.anchor.rects[0].page * 1e6 + Math.round(res.anchor.rects[0].y * 1e5) : h.order
       await db.highlights.update(h.id, { anchor: res.anchor, text: res.text, order, updatedAt: Date.now() })
-      
+
       setToolbar((t) => (t?.highlight?.id === h.id ? { ...t, highlight: { ...t.highlight, anchor: res.anchor, text: res.text, order } } : t))
     },
     onDrawer: async (d: HighlightDrawer) => {
@@ -581,7 +564,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
       setToolbar(null)
     },
     onNote: async () => {
-      
+
       if (toolbar.selection && !toolbar.highlight) {
         const h = await makeHighlight(toolbar.selection, settings.lastHighlightColor)
         setToolbar(null)
@@ -631,7 +614,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
       : undefined,
   }
 
-  
   const openPanel = (tab: PanelTab) => {
     if (panelOpen && panelTab === tab) {
       setPanelOpen(false)
@@ -668,7 +650,7 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
       marks.push({ id: hl.id, p: clamp(p, 0, 1), kind: hl.hasNote ? 'note' : 'highlight', color: `var(--hl-${hl.color}-solid)` })
     }
     return marks
-    
+
   }, [ready, bookmarks, readerHighlights, position.chapterEnd]) 
 
   const progressShown = scrub ?? position.progress
@@ -705,7 +687,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
         </>
       )}
 
-      {}
       <div className="relative min-w-0 flex-1 bg-page" style={{ '--page-contrast': settings.pageContrast } as React.CSSProperties}>
         <div className="absolute inset-0">
           {error ? (
@@ -743,7 +724,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
           )}
         </div>
 
-        {}
         {ready && !inkMode && (
           <button
             type="button"
@@ -768,7 +748,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
           </button>
         )}
 
-        {}
         <header
           className={cn(
             'absolute inset-x-0 top-0 z-30 border-b border-border bg-background/95 pt-safe backdrop-blur transition-transform duration-200 supports-[backdrop-filter]:bg-background/85',
@@ -872,7 +851,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
           </div>
         </header>
 
-        {}
         <footer
           className={cn(
             'absolute inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-safe backdrop-blur transition-transform duration-200 supports-[backdrop-filter]:bg-background/85',
@@ -885,7 +863,6 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
               <ChevronLeft />
             </IconButton>
             <div className="relative min-w-0 flex-1">
-              {}
               <div className="pointer-events-none absolute inset-x-3 top-1/2 h-0" aria-hidden>
                 {progressMarks.map((m) => (
                   <span
@@ -924,12 +901,10 @@ function ReaderView({ doc: initialDoc, file, state: initialState, anchor: initia
               {!scrubLabel && position.detail && <span className="hidden truncate sm:inline">· {position.detail}</span>}
               {!scrubLabel && statusItems.length > 0 && <span className="hidden truncate md:inline">· {statusItems.join(' · ')}</span>}
             </div>
-            {}
             <div className="hidden w-[212px] shrink-0 sm:block" />
           </div>
         </footer>
 
-        {}
         {!chrome && position.label && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center pb-[calc(var(--safe-bottom)+8px)]">
             <span className="max-w-[80%] truncate rounded-full bg-page/90 px-3 py-0.5 text-[11px] tabular-nums tracking-wide text-muted-foreground">

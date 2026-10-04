@@ -5,7 +5,6 @@ import { ACCEPT_ATTR } from '@/lib/formats'
 import { useImport, useImportState } from '@/hooks/useImport'
 import { cn } from '@/lib/utils'
 
-
 export function ImportButton({ label = 'Import', compact, className, variant = 'default', ...rest }: ButtonProps & { label?: string; compact?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const { importFiles } = useImport()

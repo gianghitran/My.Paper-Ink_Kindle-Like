@@ -9,16 +9,11 @@ const TICK = 10_000
 
 const IDLE = 3 * 60_000
 
-
-
-
-
 export function useReadingSession(docId: string, progress: number, ready: boolean) {
   const session = useRef<ReadingSession | null>(null)
   const lastActivity = useRef(Date.now())
   const lastProgress = useRef(progress)
 
-  
   useEffect(() => {
     if (!ready) return
     const s = session.current

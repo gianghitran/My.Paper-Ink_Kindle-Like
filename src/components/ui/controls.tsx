@@ -52,7 +52,6 @@ export function TabsTrigger({ className, ...props }: React.ComponentPropsWithout
 
 export const TabsContent = TabsPrimitive.Content
 
-
 export function Segmented<T extends string>({
   value,
   onChange,

@@ -1,8 +1,6 @@
-
 export type DocFormat = 'pdf' | 'epub' | 'comic'
 
 export type SourceFormat = 'pdf' | 'epub' | 'txt' | 'md' | 'html' | 'fb2' | 'cbz' | 'cbt'
-
 
 export interface NormBox {
   x: number
@@ -15,18 +13,18 @@ export type DocKind = 'paper' | 'book' | 'document' | 'other'
 export type ReadStatus = 'unread' | 'reading' | 'finished'
 
 export interface DocumentRecord {
-  
+
   id: string
-  
+
   contentHash: string
-  
+
   filePath: string
-  
+
   coverPath?: string
   format: DocFormat
-  
+
   sourceFormat?: SourceFormat
-  
+
   contentBox?: NormBox
   kind: DocKind
   title: string
@@ -38,12 +36,12 @@ export interface DocumentRecord {
   lastOpenedAt: number | null
   favorite: 0 | 1
   status: ReadStatus
-  
+
   progress: number
-  
+
   positionLabel?: string
   pageCount?: number
-  
+
   cover?: Blob
   tags: string[]
 }
@@ -53,9 +51,9 @@ export type PdfReadMode = 'continuous' | 'paginated'
 
 export interface PdfReadingState {
   page: number
-  
+
   offset: number
-  
+
   offsetX: number
   zoom: number
   zoomMode: PdfZoomMode
@@ -83,9 +81,9 @@ export type HighlightDrawer = 'lighten' | 'underscore' | 'strikeout' | 'invert'
 export type NoteMarker = 'none' | 'underline' | 'sideline' | 'sidemark'
 
 export interface NormRect {
-  
+
   page: number
-  
+
   x: number
   y: number
   w: number
@@ -110,13 +108,13 @@ export interface Highlight {
   text: string
   createdAt: number
   updatedAt: number
-  
+
   order: number
-  
+
   tags?: string[]
-  
+
   drawer?: HighlightDrawer
-  
+
   hasNote?: boolean
 }
 
@@ -124,22 +122,20 @@ export interface InkStroke {
   id: string
   tool: 'pen' | 'highlighter'
   color: string
-  
+
   size: number
-  
+
   points: number[]
 }
 
-
 export interface InkPage {
-  
+
   id: string
   docId: string
   page: number
   strokes: InkStroke[]
   updatedAt: number
 }
-
 
 export interface NoteInk {
   width: number
@@ -151,7 +147,7 @@ export interface Note {
   id: string
   docId?: string
   highlightId?: string
-  
+
   location?: Anchor
   ink?: NoteInk
   title: string
@@ -182,7 +178,7 @@ export interface GraphEdge {
   source: string
   target: string
   label?: string
-  
+
   auto?: 0 | 1
   createdAt: number
 }
@@ -197,26 +193,23 @@ export interface EpubLocationsRecord {
   locations: string
 }
 
-
 export interface Bookmark {
   id: string
   docId: string
   anchor: Anchor
-  
+
   label: string
-  
+
   progress: number
   createdAt: number
 }
 
-
 export interface LookupCache {
-  
+
   key: string
   data: unknown
   fetchedAt: number
 }
-
 
 export interface VocabWord {
   id: string
@@ -227,22 +220,21 @@ export interface VocabWord {
   docId?: string
   anchor?: Anchor
   createdAt: number
-  
+
   dueAt: number
   intervalDays: number
   reviews: number
 }
-
 
 export interface ReadingSession {
   id: string
   docId: string
   start: number
   end: number
-  
+
   ms: number
   progressStart: number
   progressEnd: number
-  
+
   turns: number
 }

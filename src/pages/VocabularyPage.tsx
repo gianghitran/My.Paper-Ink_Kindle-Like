@@ -55,7 +55,6 @@ function Review({ due, onDone }: { due: VocabWord[]; onDone: () => void }) {
   )
 }
 
-
 export default function VocabularyPage() {
   const navigate = useNavigate()
   const words = useLiveQuery(() => db.vocab.orderBy('createdAt').reverse().toArray(), [])

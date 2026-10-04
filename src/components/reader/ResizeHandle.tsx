@@ -1,17 +1,16 @@
 import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 
-
 export function ResizeHandle({
   onResize,
   onCommit,
   side,
   label,
 }: {
-  
+
   onResize: (delta: number) => void
   onCommit: () => void
-  
+
   side: 'left' | 'right'
   label: string
 }) {

@@ -1,7 +1,3 @@
-
-
-
-
 alter table public.highlights add column if not exists tags text[] not null default '{}';
 do $$
 begin
@@ -12,7 +8,6 @@ begin
   end if;
 end $$;
 
-
 alter table public.highlights add column if not exists drawer text not null default 'lighten';
 do $$
 begin
@@ -21,8 +16,6 @@ begin
       add constraint highlights_drawer_check check (drawer in ('lighten', 'underscore', 'strikeout', 'invert'));
   end if;
 end $$;
-
-
 
 delete from public.notes
 where highlight_id is null

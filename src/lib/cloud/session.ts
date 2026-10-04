@@ -4,7 +4,6 @@ import { db } from '@/lib/db'
 import { clearFileCache } from '@/lib/services/storage'
 import { bindDeviceCache, clearDeviceCache, pruneDeviceCache } from '@/lib/services/deviceCache'
 
-
 async function pruneFiles() {
   const docs = await db.documents.toArray()
   await pruneDeviceCache(new Set(docs.flatMap((d) => [d.filePath, d.coverPath ?? '']).filter(Boolean)))
@@ -25,18 +24,16 @@ let lastSync = 0
 export const OFFLINE = 'offline'
 let rejectHooked = false
 
-
 export async function openUserLibrary(userId: string) {
   const cur = useCloud.getState()
   if (cur.userId === userId && (cur.state === 'ready' || cur.state === 'loading')) return
-  
+
   clearQueue()
   db.reset()
   clearFileCache()
-  
+
   await bindDeviceCache(userId)
-  
-  
+
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     useCloud.setState({ state: 'error', userId, error: OFFLINE })
     return
@@ -61,7 +58,6 @@ export async function openUserLibrary(userId: string) {
     })
   }
 }
-
 
 export async function refreshFromCloud(force = false) {
   const { state } = useCloud.getState()
@@ -90,7 +86,6 @@ export async function refreshSettings() {
   }
 }
 
-
 export async function signOutEverywhere() {
   flushSettings()
   await Promise.race([flush(), new Promise((r) => setTimeout(r, 5000))])
@@ -98,11 +93,10 @@ export async function signOutEverywhere() {
     await signOut()
   } finally {
     wipeLocal()
-    
+
     await clearDeviceCache()
   }
 }
-
 
 function wipeLocal() {
   clearQueue()
@@ -111,8 +105,6 @@ function wipeLocal() {
   useSettings.setState({ settings: DEFAULT_SETTINGS })
   useCloud.setState({ state: 'idle', userId: null, error: null })
 }
-
-
 
 useAuth.subscribe((s, prev) => {
   const was = prev.user?.id ?? null

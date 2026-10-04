@@ -14,11 +14,6 @@ export type ImportResult =
   | { status: 'duplicate'; doc: DocumentRecord; fileName: string }
   | { status: 'error'; fileName: string; message: string }
 
-
-
-
-
-
 export async function importFile(file: File): Promise<ImportResult> {
   try {
     if (file.size > MAX_UPLOAD_BYTES) {
@@ -89,7 +84,7 @@ export async function importFile(file: File): Promise<ImportResult> {
         const coverPath = await objectPath(id, 'cover.jpg')
         await uploadObject(coverPath, meta.cover, 'image/jpeg')
         cacheObject(coverPath, meta.cover)
-        
+
         const current = await db.documents.get(id)
         if (current) await db.documents.putNow({ ...current, coverPath, cover: meta.cover })
       } catch (err) {
@@ -107,7 +102,6 @@ export async function importFiles(files: Iterable<File>): Promise<ImportResult[]
   for (const f of files) out.push(await importFile(f))
   return out
 }
-
 
 export async function getDocumentFile(id: string): Promise<Blob | undefined> {
   const doc = await db.documents.get(id)
@@ -157,10 +151,6 @@ export function updateDocumentMeta(id: string, patch: { title?: string; author?:
   })
 }
 
-
-
-
-
 export async function deleteDocument(id: string) {
   const doc = await db.documents.get(id)
   if (!doc) return
@@ -183,7 +173,6 @@ export async function deleteDocument(id: string) {
   db.vocab.patchLocal((w) => w.docId === id, { docId: undefined })
 }
 
-
 export async function eraseAllUserData() {
   const { data } = await supabase.auth.getSession()
   const userId = data.session?.user.id
@@ -192,7 +181,7 @@ export async function eraseAllUserData() {
   const docs = await db.documents.toArray()
   const paths = docs.flatMap((d) => [d.filePath, d.coverPath ?? '']).filter(Boolean)
   for (let i = 0; i < paths.length; i += 100) await removeObjects(paths.slice(i, i + 100))
-  
+
   for (const t of ['documents', 'edges', 'nodes', 'notes', 'vocab_words', 'user_settings']) {
     const { error } = await supabase.from(t).delete().eq('user_id', userId)
     if (error) throw new Error(`${t}: ${error.message}`)

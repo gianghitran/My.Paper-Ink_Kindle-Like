@@ -383,7 +383,6 @@ function GraphView() {
     [rf, theme],
   )
 
-  
   const focusParam = params.get('focus')
   const conceptParam = params.get('concept')
   useEffect(() => {
@@ -393,7 +392,7 @@ function GraphView() {
       return
     }
     if (focusParam && nodes.some((n) => n.id === focusParam)) {
-      
+
       const t = setTimeout(() => {
         focusNode(focusParam)
         setParams({}, { replace: true })
@@ -429,7 +428,6 @@ function GraphView() {
     setTimeout(() => void rf.fitView({ padding: 0.15, duration: theme === 'eink' ? 0 : 400 }), 100)
   }
 
-  
   const { height } = useViewport()
   const lastSize = useRef({ width, height })
   useEffect(() => {

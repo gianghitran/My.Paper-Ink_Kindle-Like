@@ -29,11 +29,6 @@ function frameOffset(contents: Contents) {
   return { x: r?.left ?? 0, y: r?.top ?? 0 }
 }
 
-
-
-
-
-
 function rangeStart(cfi: string) {
   try {
     const c = new EpubCFI(cfi)
@@ -44,10 +39,6 @@ function rangeStart(cfi: string) {
     return cfi
   }
 }
-
-
-
-
 
 async function reveal(r: Rendition, cfi: string) {
   const target = rangeStart(cfi)
@@ -66,20 +57,14 @@ async function reveal(r: Rendition, cfi: string) {
   }
 }
 
-
-
-
-
-
 function refreshMarks(r: Rendition | null) {
   try {
     const views = (r as unknown as { views?: () => { forEach?: (fn: (v: { pane?: { render?: () => void } }) => void) => void } })?.views?.()
     views?.forEach?.((v) => v?.pane?.render?.())
   } catch {
-    
+
   }
 }
-
 
 function linkNear(doc: Document, target: Element | null, x: number, y: number) {
   const direct = target?.closest?.('a[href]') as HTMLAnchorElement | null
@@ -108,7 +93,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
   const twoPageSetting = useSettings((s) => s.settings.twoPage)
   const styleRef = useRef({ epub, theme, pageTurn })
   styleRef.current = { epub, theme, pageTurn }
-  
+
   const [frameSize, setFrameSize] = useState({ w: 0, h: 0 })
   const twoUp = epub.flow === 'paginated' && wantsTwoPages(twoPageSetting, frameSize.w, frameSize.h)
 
@@ -122,27 +107,26 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
   const lastLocation = useRef<Location | null>(null)
   const locationsReady = useRef(false)
   const readySent = useRef(false)
-  
+
   const holdSaveUntil = useRef(Number.POSITIVE_INFINITY)
   const resizeCleanup = useRef<(() => void) | null>(null)
-  
+
   const visibleBoxes = useRef(new Map<string, VisibleBox[]>())
   const searchMark = useRef<string | null>(null)
   const suppressClick = useRef(0)
-  
+
   const suppressSel = useRef(0)
   const touch = useRef<{ x: number; y: number; t: number } | null>(null)
   const highlightsRef = useRef<Highlight[]>(highlights)
   highlightsRef.current = highlights
 
-  
   useEffect(() => {
     let cancelled = false
     let b: Book | null = null
     ;(async () => {
       const data = await file.arrayBuffer()
       b = ePub(data)
-      
+
       b.spine.hooks.content.register((doc: Document) => hardenEpubSection(doc))
       await b.ready
       if (cancelled) return
@@ -175,7 +159,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     })
     return () => {
       cancelled = true
-      
+
       if (b) void b.opened.catch(() => {}).finally(() => b!.destroy())
     }
   }, [file, doc.id])
@@ -183,7 +167,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
   const chapterFor = useCallback((spineIndex: number) => {
     let best: FlatToc | null = null
     for (const t of tocRef.current) {
-      
+
       if (t.spineIndex <= spineIndex && (!best || t.spineIndex > best.spineIndex)) {
         best = t
       }
@@ -191,7 +175,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     return best?.label || `Section ${spineIndex + 1}`
   }, [])
 
-  
   const anchorFromRange = (contents: Contents, range: Range, cfi?: string): Omit<SelectionInfo, 'rect'> | null => {
     if (!book) return null
     const text = range.toString().replace(/\s+/g, ' ').trim()
@@ -220,7 +203,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       order: spineIndex * 1e7 + Math.min(preText.length, 9_999_999),
     }
   }
-  
+
   const contentsFor = (cfi: string): Contents | null => {
     let found: Contents | null = null
     try {
@@ -228,12 +211,11 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         if (v.contents && cfi.startsWith(`epubcfi(${v.contents.cfiBase}!`)) found = v.contents
       })
     } catch {
-      
+
     }
     return found
   }
 
-  
   const repaint = useCallback(() => {
     const r = renditionRef.current
     if (!r) return
@@ -248,13 +230,12 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         boxes.set(v.contents.cfiBase, paintView(v, highlightsRef.current, opts))
       })
     } catch {
-      
+
     }
     visibleBoxes.current = boxes
   }, [])
   const redrawHighlights = repaint
 
-  
   const locSpine = useRef<number[] | null>(null)
   const chapterEndFor = (index: number) => {
     if (!book) return undefined
@@ -279,7 +260,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     return next / total
   }
 
-  
   const report = useCallback(
     (loc: Location) => {
       if (!book || !loc?.start) return
@@ -299,8 +279,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       locationRef.current = { cfi: start.cfi, href: start.href, chapter }
       const paged = styleRef.current.epub.flow === 'paginated'
       const left = start.displayed ? start.displayed.total - start.displayed.page : 0
-      
-      
+
       let page: number | undefined
       let totalPages: number | undefined
       let pageLabel: string | null = null
@@ -329,7 +308,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     [book, chapterFor], 
   )
 
-  
   const resolveHref = (contents: Contents, href: string) => {
     if (!book) return href
     const section = book.spine.get(contents.sectionIndex) as Section | null
@@ -358,14 +336,13 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     const target = doc?.getElementById(id)
     if (!target) return null
     const block = (target.closest('aside, li, dd, p, div, section, blockquote') ?? target).cloneNode(true) as Element
-    
+
     block.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((h) => h.remove())
     const text = (block.textContent ?? '').replace(/\s+/g, ' ').trim()
     if (!text) return null
     return { text: text.length > 2400 ? `${text.slice(0, 2400)}…` : text, href: full }
   }
 
-  
   useEffect(() => {
     const host = hostRef.current
     if (!book || !host || !frameSize.w) return
@@ -377,8 +354,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       manager: scrolled ? 'continuous' : 'default',
       spread: twoUp ? 'auto' : 'none',
       minSpreadWidth: twoUp ? 0 : 100000,
-      
-      
+
       allowScriptedContent: true,
     })
     renditionRef.current = r
@@ -391,7 +367,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       style.id = STYLE_ID
       style.textContent = buildEpubCss(styleRef.current.epub, styleRef.current.theme)
       d.head?.appendChild(style)
-      
+
       d.addEventListener(
         'click',
         (e) => {
@@ -403,8 +379,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         },
         true,
       )
-      
-      
+
       let tap: { x: number; y: number; t: number } | null = null
       d.addEventListener(
         'touchstart',
@@ -450,9 +425,9 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
           repaint()
         })
     })
-    
+
     r.on('resized', () => setTimeout(redrawHighlights, 60))
-    
+
     let resizeTimer: ReturnType<typeof setTimeout> | null = null
     const onWindowResize = () => {
       if (resizeTimer) clearTimeout(resizeTimer)
@@ -485,7 +460,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       }
     })
 
-    
     const hitHighlight = (contents: Contents, x: number, y: number) => {
       const boxes = visibleBoxes.current.get(contents.cfiBase) ?? []
       const ids = hitBoxes(boxes, x, y)
@@ -496,7 +470,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       return { hits, rect: { left: off.x + first.left, top: off.y + first.top, width: first.width, height: first.height } }
     }
 
-    
     const tapAt = (contents: Contents, x: number, y: number) => {
       const hit = hitHighlight(contents, x, y)
       if (hit) {
@@ -512,7 +485,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       else propsRef.current.onToggleChrome()
     }
 
-    
     const activateLink = (contents: Contents, a: HTMLAnchorElement) => {
       const href = (a.getAttribute('href') ?? '').trim()
       if (!href) return
@@ -521,7 +493,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         return
       }
       if (/^[a-z][a-z\d+.-]*:/i.test(href)) return 
-      
+
       const type = `${a.getAttribute('epub:type') ?? ''} ${a.getAttributeNS('http://www.idpf.org/2007/ops', 'type') ?? ''} ${a.getAttribute('role') ?? ''}`
       const label = (a.textContent ?? '').trim()
       const looksLikeNote =
@@ -577,7 +549,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
 
     const hlAnchor = initialAnchor?.type === 'epub' ? rangeStart(initialAnchor.cfi) : null
     const target = locationRef.current?.cfi ?? hlAnchor ?? initialState?.epub?.cfi
-    
+
     const opening = !locationRef.current?.cfi && hlAnchor ? reveal(r, hlAnchor) : r.display(target || undefined)
     opening
       .catch(() => r.display())
@@ -590,7 +562,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         setRenditionVersion((v) => v + 1)
       })
 
-    
     let cancelledGen = false
     if (!locationsReady.current) {
       const run = () => {
@@ -619,7 +590,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     }
   }, [book, epub.flow, twoUp, frameSize.w > 0]) 
 
-  
   const firstStyle = useRef(true)
   useEffect(() => {
     if (firstStyle.current) {
@@ -634,7 +604,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       const el = c.document?.getElementById(STYLE_ID)
       if (el) el.textContent = css
     }
-    
+
     const cfi = locationRef.current?.cfi
     const t = setTimeout(() => {
       if (cfi && renditionRef.current === r) void r.display(cfi).then(redrawHighlights)
@@ -643,7 +613,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     return () => clearTimeout(t)
   }, [epub.font, epub.fontSize, epub.lineHeight, epub.paragraphSpacing, epub.justify, epub.boldness, epub.wordSpacing, theme]) 
 
-  
   const animating = useRef(false)
   const turn = useCallback(async (dir: 1 | -1) => {
     const r = renditionRef.current
@@ -660,7 +629,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       return
     }
     animating.current = true
-    
+
     const settle = (a: Animation, ms: number) => Promise.race([a.finished, new Promise((res) => setTimeout(res, ms))])
     try {
       const flip = style === 'flip'
@@ -678,8 +647,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         { duration: flip ? 230 : 170, easing: 'cubic-bezier(0.55, 0, 0.75, 0.3)', fill: 'forwards' },
       )
       await settle(out, 400)
-      
-      
+
       host.style.opacity = '0'
       out.cancel()
       await go()
@@ -703,7 +671,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       const settled = r.currentLocation() as unknown as Location
       if (settled?.start) reportRef.current(settled)
     } catch {
-      
+
     } finally {
       host.style.opacity = ''
       animating.current = false
@@ -716,7 +684,6 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
   reportRef.current = report
   turnRef.current = turn
 
-  
   useLayoutEffect(() => {
     const host = hostRef.current
     if (!host) return
@@ -742,13 +709,11 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
     }
   }, [])
 
-  
   const noteMarker = useSettings((st) => st.settings.noteMarker)
   useEffect(() => {
     repaint()
   }, [highlights, renditionVersion, theme, noteMarker, repaint])
 
-  
   useImperativeHandle(
     ref,
     (): ReaderHandle => ({
@@ -777,8 +742,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
         }
       },
       spanAnchors: async (a, b) => {
-        
-        
+
         if (a.type !== 'epub' || b.type !== 'epub') return null
         const c = contentsFor(b.cfi)
         if (!c || !a.cfi.startsWith(`epubcfi(${c.cfiBase}!`)) return null
@@ -856,7 +820,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
               results.push({ id: f.cfi, where: chapter, excerpt: f.excerpt, target: f.cfi })
             }
           } catch {
-            
+
           } finally {
             item.unload()
           }
@@ -875,7 +839,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
           try {
             r.annotations.highlight(cfi, {}, undefined, 'pi-search', { fill: '#ea580c', 'fill-opacity': '0.35', 'mix-blend-mode': 'multiply' })
           } catch {
-            
+
           }
         })
       },

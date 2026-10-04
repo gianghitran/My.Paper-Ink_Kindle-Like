@@ -43,7 +43,6 @@ const PillTrigger = forwardRef<HTMLButtonElement, { screen: InkScreen; tabIndex?
 )
 PillTrigger.displayName = 'PillTrigger'
 
-
 export function InkModeMenu({ variant, tabIndex }: { variant: 'pill' | 'icon'; tabIndex?: number }) {
   const settings = useSettings((s) => s.settings)
   const update = useSettings((s) => s.update)
@@ -81,14 +80,13 @@ const toneName = (t: number) => (t < 0.08 ? 'White' : t < 0.38 ? 'Light gray' : 
 
 const warmthName = (w: number) => (Math.abs(w) < 0.05 ? 'Neutral' : `${w < 0 ? 'Cool' : 'Warm'} ${Math.round(Math.abs(w) * 100)}%`)
 
-
 export function InkToneSlider({ className }: { className?: string }) {
   const inkFilter = useSettings((s) => s.settings.inkFilter)
   const update = useSettings((s) => s.update)
   const tone = inkFilter.tone
   const warmth = inkFilter.warmth
   return (
-    
+
     <div className={cn('flex flex-col', className)} onKeyDown={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between text-[13px]">
         <span>Background</span>

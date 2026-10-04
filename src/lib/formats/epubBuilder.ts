@@ -2,12 +2,12 @@ import JSZip from 'jszip'
 
 export interface BuildChapter {
   title: string
-  
+
   body: Node[]
 }
 
 export interface BuildImage {
-  
+
   name: string
   mime: string
   data: Uint8Array
@@ -41,7 +41,6 @@ img { max-width: 100%; height: auto; }
 .note-title { font-weight: bold; }
 `
 
-
 function xhtmlFor(title: string, lang: string, nodes: Node[]) {
   const doc = document.implementation.createHTMLDocument(title)
   const holder = doc.createElement('div')
@@ -50,7 +49,7 @@ function xhtmlFor(title: string, lang: string, nodes: Node[]) {
   const inner = Array.from(holder.childNodes)
     .map((n) => ser.serializeToString(n))
     .join('\n')
-    
+
     .replace(/ xmlns="http:\/\/www\.w3\.org\/1999\/xhtml"/g, '')
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
@@ -61,11 +60,6 @@ ${inner}
 </body>
 </html>`
 }
-
-
-
-
-
 
 export async function buildEpub(input: BuildInput): Promise<Blob> {
   const lang = input.lang || 'en'

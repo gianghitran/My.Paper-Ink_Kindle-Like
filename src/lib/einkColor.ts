@@ -1,28 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export const KALEIDO3 = {
   colors: 4096,
   grayLevels: 16,
@@ -30,19 +5,14 @@ export const KALEIDO3 = {
   ppiColor: 150,
 } as const
 
-
 export const CHANNEL_LEVELS = Math.round(Math.cbrt(KALEIDO3.colors))
-
 
 export const PASTEL_SATURATION = 0.55
 
-
 export const PAPER_WHITE = [0.93, 0.93, 0.925] as const
-
 
 const COOL_TINT = [0.9, 0.955, 1] as const
 const WARM_TINT = [1, 0.955, 0.82] as const
-
 
 export function lightTint(warmth: number): [number, number, number] {
   const w = Math.min(1, Math.max(-1, Number.isFinite(warmth) ? warmth : 0))
@@ -51,19 +21,12 @@ export function lightTint(warmth: number): [number, number, number] {
   return [0, 1, 2].map((i) => +(1 + (end[i] - 1) * a).toFixed(4)) as [number, number, number]
 }
 
-
 export const paperWhite = (warmth: number) => lightTint(warmth).map((t, i) => PAPER_WHITE[i] * t)
-
 
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 
 export const KALEIDO_FILTER_ID = 'paperink-kaleido3'
 export const TONE_FILTER_ID = 'paperink-ink-tone'
-
-
-
-
-
 
 export function inkTone(tone: number) {
   const t = Math.min(1, Math.max(0, Number.isFinite(tone) ? tone : 0))
@@ -89,11 +52,6 @@ function svgHost() {
 let version = 0
 const current: Record<string, { key: string; id: string }> = {}
 
-
-
-
-
-
 function upsertFilter(base: string, key: string, build: (id: string) => string) {
   const prev = current[base]
   if (prev && prev.key === key && document.getElementById(prev.id)) return prev.id
@@ -104,13 +62,9 @@ function upsertFilter(base: string, key: string, build: (id: string) => string) 
   return id
 }
 
-
-
-
-
 export function ensureToneFilter(tone: number, warmth = 0) {
   const { tone: t, bg, ink } = inkTone(tone)
-  
+
   const tint = lightTint(warmth)
   const f = (['R', 'G', 'B'] as const)
     .map((c, i) => {
@@ -122,20 +76,13 @@ export function ensureToneFilter(tone: number, warmth = 0) {
   return upsertFilter(TONE_FILTER_ID, `${t}|${tint}`, (id) => `<filter id="${id}" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feComponentTransfer>${f}</feComponentTransfer></filter>`)
 }
 
-
 export function channelTable(paper: number, ink = 0, levels = CHANNEL_LEVELS) {
   return Array.from({ length: levels }, (_, k) => +(ink + ((paper - ink) * k) / (levels - 1)).toFixed(4))
 }
 
-
-
-
-
 const DITHER_SPAN = 0.84
 
-
 const GUARD = 0.003
-
 
 function bayerTile() {
   const c = document.createElement('canvas')
@@ -151,24 +98,21 @@ function bayerTile() {
   return c.toDataURL('image/png')
 }
 
-
 export function ensureKaleidoFilter(tone = 0, warmth = 0) {
   const t = inkTone(tone)
   const paper = paperWhite(warmth)
   const key = `${t.tone}|${paper}`
   const prev = current[KALEIDO_FILTER_ID]
   if (prev && prev.key === key && document.getElementById(prev.id)) return prev.id
-  
+
   const [r, g, b] = paper.map((w) => channelTable(w * t.bg, t.inverted ? w : 0).join(' '))
-  
+
   const hue = t.inverted
-  
-  
-  
+
   const scale = +((CHANNEL_LEVELS - 1) / CHANNEL_LEVELS).toFixed(5)
   const step = +(1 / CHANNEL_LEVELS).toFixed(5)
   const tile = bayerTile()
-  
+
   const threshold = tile
     ? `<feImage href="${tile}" x="0" y="0" width="4" height="4" preserveAspectRatio="none" result="cell"/>
   <feTile in="cell" result="bayer"/>
@@ -186,4 +130,54 @@ export function ensureKaleidoFilter(tone = 0, warmth = 0) {
     <feFuncB type="discrete" tableValues="${b}"/>
   </feComponentTransfer>
 </filter>`)
+}
+
+export const svgFilterUnreliable = () =>
+  typeof navigator !== 'undefined' &&
+  (/iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1))
+
+const SCREEN_LAYER_ID = 'paperink-ink-screen'
+
+type LayerSpec = { backdrop: string; lift: number; paper: number[] }
+
+export function screenLayerSpec(mode: 'mono' | 'color', tone: number, warmth: number): LayerSpec {
+  const t = inkTone(tone)
+  const base = mode === 'color' ? `saturate(${PASTEL_SATURATION})` : 'grayscale(1) contrast(1.08) brightness(0.99)'
+  const white = mode === 'color' ? paperWhite(warmth) : lightTint(warmth)
+  if (t.inverted) {
+    return { backdrop: `${base}${mode === 'color' ? ' hue-rotate(180deg)' : ''} invert(1)`, lift: t.bg, paper: white }
+  }
+  return { backdrop: base, lift: 0, paper: white.map((w) => w * t.bg) }
+}
+
+const rgb = (c: number[]) => `rgb(${c.map((v) => Math.round(Math.min(1, Math.max(0, v)) * 255)).join(' ')})`
+
+export function applyScreenLayers(spec: LayerSpec | null) {
+  const ids = ['filter', 'lift', 'paper'].map((k) => `${SCREEN_LAYER_ID}-${k}`)
+  if (!spec) {
+    ids.forEach((id) => document.getElementById(id)?.remove())
+    return
+  }
+  const layer = (id: string) => {
+    let el = document.getElementById(id)
+    if (!el) {
+      el = document.createElement('div')
+      el.id = id
+      el.setAttribute('aria-hidden', 'true')
+      el.style.cssText = 'position:fixed;inset:0;z-index:2147483646;pointer-events:none;'
+      document.body.append(el)
+    }
+    return el
+  }
+  const f = layer(ids[0])
+  f.style.setProperty('-webkit-backdrop-filter', spec.backdrop, 'important')
+  f.style.setProperty('backdrop-filter', spec.backdrop, 'important')
+  const lift = layer(ids[1])
+  lift.style.background = rgb([spec.lift, spec.lift, spec.lift])
+  lift.style.mixBlendMode = 'screen'
+  lift.style.display = spec.lift > 0 ? '' : 'none'
+  const paper = layer(ids[2])
+  paper.style.background = rgb(spec.paper)
+  paper.style.mixBlendMode = 'multiply'
+  ids.forEach((id) => document.body.append(document.getElementById(id)!))
 }

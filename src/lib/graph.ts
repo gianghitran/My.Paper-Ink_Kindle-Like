@@ -95,10 +95,6 @@ export async function createConceptNode(label: string, pos?: { x: number; y: num
   return createNode({ type: 'concept', label: label.trim() || 'New concept', ...(pos ?? {}) })
 }
 
-
-
-
-
 export async function syncNoteWikilinks(noteId: string) {
   const note = await db.notes.get(noteId)
   if (!note) return
@@ -136,13 +132,11 @@ export async function renameNode(id: string, label: string, description?: string
   await db.nodes.update(id, { label, ...(description !== undefined ? { description } : {}), updatedAt: Date.now() })
 }
 
-
 export async function backlinksForConcept(label: string) {
   const key = normalizeConcept(label)
   const notes = await db.notes.toArray()
   return notes.filter((n) => extractWikilinks(`${n.title}\n${n.content}`).some((l) => normalizeConcept(l) === key))
 }
-
 
 export const DOC_NODE_TYPES: NodeType[] = ['paper', 'book', 'document', 'other']
 export const isDocNodeType = (t: NodeType) => DOC_NODE_TYPES.includes(t)

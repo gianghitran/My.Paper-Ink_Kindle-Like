@@ -6,7 +6,7 @@ export interface DictSense {
 }
 export interface DictResult {
   term: string
-  
+
   languages: { lang: string; language: string; senses: DictSense[] }[]
 }
 export interface WikiResult {
@@ -17,7 +17,6 @@ export interface WikiResult {
 
 const htmlToText = (html: string) => new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html').body.textContent?.replace(/\s+/g, ' ').trim() ?? ''
 
-
 async function cached<T>(key: string, fetcher: () => Promise<T | null>): Promise<{ data: T | null; offline: boolean }> {
   const hit = await db.lookups.get(key)
   if (hit) return { data: hit.data as T | null, offline: false }
@@ -27,7 +26,6 @@ async function cached<T>(key: string, fetcher: () => Promise<T | null>): Promise
   return { data, offline: false }
 }
 
-
 export function lookupTerm(selection: string) {
   return selection
     .replace(/[’']s\b/g, '')
@@ -36,7 +34,6 @@ export function lookupTerm(selection: string) {
     .trim()
     .slice(0, 80)
 }
-
 
 export async function lookupDictionary(term: string) {
   return cached<DictResult>(`wiktionary:en:${term.toLowerCase()}`, async () => {
@@ -79,7 +76,6 @@ export async function lookupWikipedia(term: string, lang: string) {
 export function translateUrl(text: string, target: string) {
   return `https://translate.google.com/?sl=auto&tl=${encodeURIComponent(target)}&text=${encodeURIComponent(text.slice(0, 1500))}&op=translate`
 }
-
 
 export function sentenceAround(prefix: string | undefined, exact: string, suffix: string | undefined) {
   const before = (prefix ?? '').split(/(?<=[.!?。！？])\s+/).pop() ?? ''

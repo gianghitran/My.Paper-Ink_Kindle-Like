@@ -15,14 +15,6 @@ import type {
   VocabWord,
 } from '@/types'
 
-
-
-
-
-
-
-
-
 type Row = Record<string, unknown>
 const iso = (ms: number | null | undefined) => (typeof ms === 'number' && Number.isFinite(ms) ? new Date(ms).toISOString() : null)
 const ms = (v: unknown) => (typeof v === 'string' ? Date.parse(v) : null)
@@ -118,7 +110,7 @@ const highlights: TableDef<Highlight> = {
       sort_order: num(h.order),
       created_at: iso(h.createdAt),
       updated_at: iso(h.updatedAt),
-      
+
       ...(h.tags ? { tags: tags(h.tags) } : {}),
       ...(h.drawer ? { drawer: h.drawer } : {}),
     }),
@@ -222,7 +214,6 @@ const edges: TableDef<GraphEdge> = {
     }),
   },
 }
-
 
 const settings: TableDef<SettingRecord> = {
   key: 'key',
@@ -339,7 +330,6 @@ const sessions: TableDef<ReadingSession> = {
   },
 }
 
-
 const lookups: TableDef<LookupCache> = { key: 'key', remote: null }
 
 export class PaperInkDB {
@@ -375,16 +365,11 @@ export class PaperInkDB {
     ]
   }
 
-  
-
-
-
   async transaction<R>(...args: unknown[]): Promise<R> {
     const fn = args[args.length - 1] as () => Promise<R>
     return fn()
   }
 
-  
   async hydrate() {
     await Promise.all(this.tables.map((t) => t.hydrate()))
   }

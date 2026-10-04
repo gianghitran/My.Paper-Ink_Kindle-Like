@@ -32,10 +32,6 @@ function chunks(text: string) {
 
 export const readAloudSupported = () => typeof window !== 'undefined' && 'speechSynthesis' in window
 
-
-
-
-
 export function useReadAloud(handle: React.RefObject<ReaderHandle | null>, currentPage: () => number | undefined) {
   const [status, setStatus] = useState<Status>('idle')
   const statusRef = useRef<Status>('idle')
@@ -54,7 +50,7 @@ export function useReadAloud(handle: React.RefObject<ReaderHandle | null>, curre
       const h = handle.current
       if (!h || id !== runId.current) return
       let text = (await h.getVisibleText()).trim()
-      
+
       for (let tries = 0; !text && tries < 6 && id === runId.current; tries++) {
         await new Promise((r) => setTimeout(r, 500))
         text = (await h.getVisibleText()).trim()
@@ -82,8 +78,7 @@ export function useReadAloud(handle: React.RefObject<ReaderHandle | null>, curre
           }
           u.onend = finish
           u.onerror = finish
-          
-          
+
           const deadline = Date.now() + Math.max(5000, (part.length * 120) / u.rate)
           const guard = setInterval(() => {
             if (statusRef.current === 'paused') return
@@ -93,7 +88,7 @@ export function useReadAloud(handle: React.RefObject<ReaderHandle | null>, curre
         })
         if (id !== runId.current) return
       }
-      
+
       if (!parts.length && emptyPagesInARow > 3) {
         set('idle')
         return

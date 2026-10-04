@@ -1,8 +1,3 @@
-
-
-
-
-
 type Modify = (alter: 'extend', direction: 'forward' | 'backward', granularity: 'word' | 'character') => void
 
 export function adjustRange(win: Window, range: Range, side: 0 | 1, dir: -1 | 1, byChar: boolean): Range | null {
@@ -11,7 +6,7 @@ export function adjustRange(win: Window, range: Range, side: 0 | 1, dir: -1 | 1,
   const modify = (sel as unknown as { modify: Modify }).modify.bind(sel)
   const before = range.toString()
   sel.removeAllRanges()
-  
+
   if (side === 0) sel.setBaseAndExtent(range.endContainer, range.endOffset, range.startContainer, range.startOffset)
   else sel.setBaseAndExtent(range.startContainer, range.startOffset, range.endContainer, range.endOffset)
   const direction = dir > 0 ? 'forward' : 'backward'
@@ -21,7 +16,7 @@ export function adjustRange(win: Window, range: Range, side: 0 | 1, dir: -1 | 1,
     if (!sel.rangeCount) break
     out = sel.getRangeAt(0).cloneRange()
     const edge = side === 0 ? out.toString().charAt(0) : out.toString().slice(-1)
-    
+
     if (!byChar || !/\s/.test(edge)) break
   }
   sel.removeAllRanges()
@@ -32,7 +27,6 @@ export function adjustRange(win: Window, range: Range, side: 0 | 1, dir: -1 | 1,
   return out
 }
 
-
 export function trimRange(r: Range) {
   const text = r.toString()
   const lead = text.length - text.trimStart().length
@@ -41,14 +35,13 @@ export function trimRange(r: Range) {
   if (trail) shift(r, 'end', -trail)
 }
 
-
 function shift(r: Range, which: 'start' | 'end', n: number) {
   const doc = r.startContainer.ownerDocument
   if (!doc) return
   const node = which === 'start' ? r.startContainer : r.endContainer
   const offset = which === 'start' ? r.startOffset : r.endOffset
   const walker = doc.createTreeWalker(doc.body ?? doc.documentElement, NodeFilter.SHOW_TEXT)
-  
+
   let cur: Text | null = null
   let pos = 0
   if (node.nodeType === Node.TEXT_NODE) {

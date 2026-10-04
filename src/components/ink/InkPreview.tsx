@@ -3,7 +3,6 @@ import { strokePath, strokesBBox } from '@/lib/ink'
 import { cn } from '@/lib/utils'
 import type { InkStroke } from '@/types'
 
-
 export const InkPreview = memo(function InkPreview({
   strokes,
   className,

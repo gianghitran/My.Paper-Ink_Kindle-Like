@@ -65,7 +65,6 @@ function Logo({ compact }: { compact?: boolean }) {
   )
 }
 
-
 function AccountFooter({ collapsed }: { collapsed: boolean }) {
   const user = useAuth((s) => s.user)
   const navigate = useNavigate()
@@ -221,7 +220,6 @@ function BottomNav() {
     </nav>
   )
 }
-
 
 function DropOverlay() {
   const [active, setActive] = useState(false)

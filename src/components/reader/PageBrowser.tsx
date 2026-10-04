@@ -20,7 +20,7 @@ const Thumb = memo(function Thumb({
   const ref = useRef<HTMLButtonElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [drawn, setDrawn] = useState(false)
-  
+
   useEffect(() => {
     const el = ref.current
     if (!el || drawn) return
@@ -58,7 +58,6 @@ const Thumb = memo(function Thumb({
   )
 })
 
-
 export function PageBrowser({
   handle,
   currentPage,
@@ -90,7 +89,7 @@ export function PageBrowser({
           current={p === currentPage}
           marks={{ bookmark: bookmarkedPages.has(p), highlight: highlightPages.has(p), ink: inkPages.has(p) }}
           onPick={(pg) => {
-            
+
             onPicked()
             handle.current?.goToPage?.(pg)
           }}

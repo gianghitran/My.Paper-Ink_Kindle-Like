@@ -4,10 +4,6 @@ import { hlSolid } from '@/lib/annotations'
 import { truncate } from '@/lib/utils'
 import type { Highlight } from '@/types'
 
-
-
-
-
 export function HighlightChooser({
   hits,
   hasNote,

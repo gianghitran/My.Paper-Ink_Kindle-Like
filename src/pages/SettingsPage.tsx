@@ -228,7 +228,6 @@ export default function SettingsPage() {
   )
 }
 
-
 function DeviceCacheRow() {
   const [usage, setUsage] = useState<{ files: number; bytes: number } | null>(null)
   const [version, setVersion] = useState(0)

@@ -4,10 +4,6 @@ import type { InkStroke } from '@/types'
 
 type Op = { kind: 'add'; key: number; strokes: InkStroke[] } | { kind: 'erase'; key: number; strokes: InkStroke[] }
 
-
-
-
-
 export function useInkHistory(initial: Map<number, InkStroke[]>, persist?: (key: number, strokes: InkStroke[]) => void) {
   const [surfaces, setSurfaces] = useState(initial)
   const ref = useRef(initial)
@@ -107,7 +103,6 @@ export function useInkHistory(initial: Map<number, InkStroke[]>, persist?: (key:
     canRedo: redoStack.current.length > 0,
   }
 }
-
 
 export function useDocInk(docId: string) {
   const persist = useCallback((page: number, strokes: InkStroke[]) => void writePageInk(docId, page, strokes), [docId])

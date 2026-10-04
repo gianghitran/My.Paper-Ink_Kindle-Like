@@ -1,9 +1,7 @@
 import { getCachedFile, putCachedFile, removeCachedFiles } from './deviceCache'
 import { STORAGE_BUCKET, supabase } from '@/lib/supabase/client'
 
-
 export const MAX_UPLOAD_BYTES = 200 * 1024 * 1024
-
 
 const ALLOWED_TYPES = new Set([
   'application/pdf',
@@ -15,7 +13,6 @@ const ALLOWED_TYPES = new Set([
   'image/jpeg',
 ])
 
-
 export function safeObjectName(name: string, fallback = 'document') {
   const cleaned = name
     .normalize('NFKD')
@@ -26,7 +23,6 @@ export function safeObjectName(name: string, fallback = 'document') {
     .slice(-120)
   return cleaned || fallback
 }
-
 
 export async function objectPath(documentId: string, fileName: string) {
   const { data } = await supabase.auth.getSession()
@@ -41,7 +37,6 @@ export async function uploadObject(path: string, blob: Blob, contentType: string
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType, upsert: false, cacheControl: '3600' })
   if (error) throw new Error(error.message)
 }
-
 
 const MAX_CACHE_BYTES = 400 * 1024 * 1024
 const fileCache = new Map<string, Blob>()
@@ -65,7 +60,7 @@ export async function downloadObject(path: string): Promise<Blob> {
   let p = inflight.get(path)
   if (!p) {
     p = (async () => {
-      
+
       const cached = await getCachedFile(path)
       if (cached) {
         remember(path, cached)
@@ -82,7 +77,6 @@ export async function downloadObject(path: string): Promise<Blob> {
   return p
 }
 
-
 export function cacheObject(path: string, blob: Blob) {
   remember(path, blob)
   void putCachedFile(path, blob)
@@ -96,7 +90,6 @@ export async function removeObjects(paths: string[]) {
   const { error } = await supabase.storage.from(STORAGE_BUCKET).remove(list)
   if (error) throw new Error(error.message)
 }
-
 
 export function clearFileCache() {
   fileCache.clear()

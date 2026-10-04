@@ -3,7 +3,6 @@ import { db } from './db'
 import type { InkSize, InkToolName } from '@/store/settings'
 import type { InkPage, InkStroke } from '@/types'
 
-
 export const INK_REFERENCE_WIDTH = 612
 
 export const PEN_COLORS = ['#1f1f1f', '#1d4ed8', '#dc2626', '#15803d', '#c2410c']
@@ -13,7 +12,6 @@ const SIZES: Record<'pen' | 'highlighter', Record<InkSize, number>> = {
   pen: { fine: 1.2, medium: 2, bold: 3.4 },
   highlighter: { fine: 8, medium: 12, bold: 18 },
 }
-
 
 export function inkSize(tool: 'pen' | 'highlighter', size: InkSize, surfaceWidth: number) {
   return SIZES[tool][size] * (surfaceWidth / INK_REFERENCE_WIDTH)
@@ -25,24 +23,17 @@ export function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 }
 
-
-
-
-
 let penSeen = false
 export const markPenSeen = () => {
   penSeen = true
 }
 export const wasPenSeen = () => penSeen
 
-
 let penPanConflict = false
 export const markPenPanConflict = () => {
   penPanConflict = true
 }
 export const hasPenPanConflict = () => penPanConflict
-
-
 
 const pathCache = new WeakMap<InkStroke, string>()
 
@@ -65,7 +56,6 @@ function toTriples(points: number[]) {
   for (let i = 0; i + 2 < points.length; i += 3) out.push([points[i], points[i + 1], points[i + 2]])
   return out
 }
-
 
 function hasPressure(points: number[]) {
   for (let i = 2; i < points.length; i += 3) if (points[i] !== 0.5) return true
@@ -90,7 +80,6 @@ export function strokeOutlinePath(stroke: Pick<InkStroke, 'tool' | 'size' | 'poi
     }),
   )
 }
-
 
 export function strokePath(stroke: InkStroke) {
   let d = pathCache.get(stroke)
@@ -140,8 +129,6 @@ export function strokesBBox(strokes: InkStroke[]) {
 export function inkColorFor(tool: InkToolName, penColor: string, highlighterColor: string) {
   return tool === 'highlighter' ? highlighterColor : penColor
 }
-
-
 
 export const inkPageId = (docId: string, page: number) => `${docId}|${page}`
 

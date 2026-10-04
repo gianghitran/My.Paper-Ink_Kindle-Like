@@ -24,16 +24,15 @@ export interface NoteDraft {
   note?: Note
   docId?: string
   highlightId?: string
-  
+
   location?: Anchor
   quote?: string
   title?: string
-  
+
   initialTab?: 'write' | 'draw'
 }
 
 type Tab = 'write' | 'draw' | 'preview'
-
 
 const PAD_WIDTH = 1000
 const PAD_MIN_HEIGHT = 760
@@ -54,7 +53,6 @@ function HandwritingPad({
   const ink = useSettings((s) => s.settings.ink)
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-border" style={{ aspectRatio: `${PAD_WIDTH} / ${height}` }}>
-      {}
       <div
         className="ink-surface absolute inset-0 bg-white"
         style={{
@@ -69,7 +67,7 @@ function HandwritingPad({
         tool={ink.tool}
         color={inkColorFor(ink.tool, ink.penColor, ink.highlighterColor)}
         size={ink.size}
-        
+
         fingersDraw={ink.fingerDraws || !wasPenSeen()}
         onAdd={onAdd}
         onErase={onErase}
@@ -112,7 +110,7 @@ export function NoteEditor({
     setHlTagsBefore([])
     const hid = draft.note?.highlightId ?? draft.highlightId
     if (hid) {
-      
+
       void db.highlights.get(hid).then((h) => {
         const hl = h?.tags ?? []
         setHlTagsBefore(hl)
@@ -125,7 +123,6 @@ export function NoteEditor({
     setTab(draft.initialTab ?? (existing?.strokes.length && !draft.note?.content.trim() ? 'draw' : 'write'))
   }, [draft, resetInk])
 
-  
   const partial = useMemo(() => {
     const before = content.slice(0, caret)
     const m = before.match(/\[\[([^[\]\n]*)$/)
@@ -162,7 +159,7 @@ export function NoteEditor({
     const hlTagsChanged = !!highlightId && hlTags.join(',') !== hlTagsBefore.join(',')
     if (highlightId && hlTagsChanged) await db.highlights.update(highlightId, { tags: hlTags, updatedAt: Date.now() })
     if (!content.trim() && !title.trim() && !strokes.length) {
-      
+
       if (hlTagsChanged && !draft?.note && !noteTags.length) {
         toast.success('Highlight tags saved')
         onOpenChange(false)

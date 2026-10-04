@@ -14,13 +14,6 @@ function subscribe(cb: () => void) {
 const getWidth = () => window.innerWidth
 const getHeight = () => window.innerHeight
 
-
-
-
-
-
-
-
 export function useViewport() {
   const width = useSyncExternalStore(subscribe, getWidth, () => 1024)
   const height = useSyncExternalStore(subscribe, getHeight, () => 768)

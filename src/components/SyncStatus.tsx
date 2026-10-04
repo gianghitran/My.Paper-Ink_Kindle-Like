@@ -2,7 +2,6 @@ import { AlertTriangle, CloudCheck, CloudOff, RefreshCw } from 'lucide-react'
 import { useSyncStatus } from '@/lib/cloud/sync'
 import { cn } from '@/lib/utils'
 
-
 export function SyncStatus({ className, compact }: { className?: string; compact?: boolean }) {
   const { pending, syncing, offline, lastError } = useSyncStatus()
   let icon = <CloudCheck />

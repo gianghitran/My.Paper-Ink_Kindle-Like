@@ -8,7 +8,6 @@ import { consumeAuthRedirect, startAuth } from './lib/services/auth'
 import { useAuthFlash } from './pages/AuthPages'
 import { registerServiceWorker } from './lib/pwa'
 
-
 window.addEventListener('vite:preloadError', (event) => {
   if (sessionStorage.getItem('paperink:chunk-reload')) return
   sessionStorage.setItem('paperink:chunk-reload', '1')
@@ -18,11 +17,11 @@ window.addEventListener('vite:preloadError', (event) => {
 window.addEventListener('load', () => setTimeout(() => sessionStorage.removeItem('paperink:chunk-reload'), 10_000))
 
 async function boot() {
-  
+
   const redirect = await consumeAuthRedirect().catch(() => ({ route: null, notice: null, error: null }))
   if (redirect.notice || redirect.error) useAuthFlash.setState({ notice: redirect.notice, error: redirect.error })
   startAuth()
-  
+
   applyTheme(useSettings.getState().settings.theme)
   applyInkFilter(useSettings.getState().settings.inkFilter)
   applyChromeColor(useSettings.getState().settings)

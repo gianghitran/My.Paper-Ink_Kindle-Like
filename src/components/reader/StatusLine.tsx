@@ -30,7 +30,6 @@ function useBattery(enabled: boolean) {
   return level
 }
 
-
 export function useStatusItems(position: ReaderPosition, stats: DocStats | null) {
   const sb = useSettings((s) => s.settings.statusBar)
   const now = useClock(sb.clock)

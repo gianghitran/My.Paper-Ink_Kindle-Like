@@ -2,18 +2,6 @@ import type { Session, User } from '@supabase/supabase-js'
 import { create } from 'zustand'
 import { appBaseUrl, supabase, supabaseConfigured } from '@/lib/supabase/client'
 
-
-
-
-
-
-
-
-
-
-
-
-
 type AuthStatus = 'loading' | 'signedOut' | 'signedIn'
 
 interface AuthState {
@@ -42,7 +30,6 @@ export function startAuth() {
 
 export const PASSWORD_MIN = 8
 
-
 export function passwordProblem(pw: string) {
   if (pw.length < PASSWORD_MIN) return `Use at least ${PASSWORD_MIN} characters.`
   if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return 'Use both letters and numbers.'
@@ -62,7 +49,6 @@ export function usernameProblem(v: string) {
   return null
 }
 
-
 function loginEmail(identifier: string) {
   const v = identifier.trim()
   return v.includes('@') ? v : `${normalizeUsername(v)}@${USERNAME_DOMAIN}`
@@ -74,7 +60,6 @@ export const isGoogleAccount = (user: User | null | undefined) => !!user && prov
 
 export const hasPassword = (user: User | null | undefined) => !!user && providers(user).includes('email')
 
-
 export function accountLabel(user: User | null | undefined) {
   if (!user) return ''
   if (isUsernameAccount(user)) return user.email!.split('@')[0]
@@ -83,7 +68,6 @@ export function accountLabel(user: User | null | undefined) {
 }
 
 const PLACEHOLDER = new RegExp(`@${USERNAME_DOMAIN.replace(/\./g, '\\.')}`, 'g')
-
 
 export function authMessage(err: { message?: string; code?: string } | null | undefined) {
   const m = err?.message ?? ''
@@ -99,7 +83,6 @@ export function authMessage(err: { message?: string; code?: string } | null | un
   return m.replace(PLACEHOLDER, '') || 'Something went wrong. Please try again.'
 }
 
-
 export async function signUpWithUsername(username: string, password: string) {
   const name = normalizeUsername(username)
   const { data, error } = await supabase.auth.signUp({
@@ -108,7 +91,7 @@ export async function signUpWithUsername(username: string, password: string) {
     options: { data: { username: name } },
   })
   if (error) throw error
-  
+
   if (!data.session) throw new Error('Email not confirmed')
 }
 
@@ -116,7 +99,6 @@ export async function signIn(identifier: string, password: string) {
   const { error } = await supabase.auth.signInWithPassword({ email: loginEmail(identifier), password })
   if (error) throw error
 }
-
 
 export async function signInWithGoogle(next = '/') {
   const back = new URL(appBaseUrl())
@@ -134,7 +116,6 @@ export async function signOut() {
   if (error) throw error
 }
 
-
 export async function changePassword(currentPassword: string, newPassword: string) {
   const email = useAuth.getState().user?.email
   if (!email) throw new Error('Not signed in')
@@ -145,12 +126,6 @@ export async function changePassword(currentPassword: string, newPassword: strin
 }
 
 const safePath = (p: string | null) => (p && p.startsWith('/') && !p.startsWith('//') ? p : '/')
-
-
-
-
-
-
 
 export async function consumeAuthRedirect(): Promise<{ route: string | null; notice: string | null; error: string | null }> {
   const url = new URL(location.href)
@@ -165,13 +140,13 @@ export async function consumeAuthRedirect(): Promise<{ route: string | null; not
     if (errorDescription) {
       error = authMessage({ message: errorDescription.replace(/\+/g, ' ') })
     } else {
-      
+
       const { data } = await supabase.auth.getSession()
       if (!data.session) error = 'Sign-in didn’t complete. Please try again in this browser.'
     }
     route = error ? '/login' : safePath(q.get('next'))
   } finally {
-    
+
     history.replaceState(null, '', `${url.pathname}#${route ?? '/'}`)
   }
   return { route, notice: null, error }

@@ -11,10 +11,6 @@ function FullScreen({ children }: { children: React.ReactNode }) {
   return <div className="flex min-h-dvh w-full flex-col items-center justify-center gap-3 bg-background p-6 text-center">{children}</div>
 }
 
-
-
-
-
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const status = useAuth((s) => s.status)
   const user = useAuth((s) => s.user)
@@ -25,7 +21,6 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     if (status === 'signedIn' && user) void openUserLibrary(user.id)
   }, [status, user])
 
-  
   useEffect(() => {
     if (cloud.state !== 'error' || !user) return
     const retry = () => {

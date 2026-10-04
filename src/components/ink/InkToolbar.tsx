@@ -5,10 +5,6 @@ import { useSettings, type InkSize, type InkToolName } from '@/store/settings'
 
 const SIZE_DOT: Record<InkSize, number> = { fine: 5, medium: 9, bold: 14 }
 
-
-
-
-
 export function InkToolbar({
   variant = 'floating',
   canUndo,

@@ -16,7 +16,6 @@ const mimeFor = (name: string) => {
 
 const naturalSort = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
 
-
 export async function listComicPages(data: ArrayBuffer): Promise<ComicPage[]> {
   const head = new Uint8Array(data, 0, Math.min(data.byteLength, 512))
   if (head[0] === 0x50 && head[1] === 0x4b) {
@@ -28,7 +27,6 @@ export async function listComicPages(data: ArrayBuffer): Promise<ComicPage[]> {
   }
   return listTar(data)
 }
-
 
 function listTar(data: ArrayBuffer): ComicPage[] {
   const bytes = new Uint8Array(data)
@@ -56,7 +54,6 @@ function listTar(data: ArrayBuffer): ComicPage[] {
   }
   return out.sort((a, b) => naturalSort(a.name, b.name))
 }
-
 
 export function imageSize(b: Uint8Array): { w: number; h: number } | null {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength)
@@ -99,7 +96,7 @@ export async function extractComicMetadata(data: ArrayBuffer, fileName: string):
     cover = await makeThumbnail(bmp)
     bmp.close()
   } catch {
-    
+
   }
   return { title: titleFromFileName(fileName), pageCount: pages.length, cover }
 }

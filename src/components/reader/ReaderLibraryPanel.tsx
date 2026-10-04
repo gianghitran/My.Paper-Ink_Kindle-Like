@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Cover } from '@/components/library/Cover'
 import { formatLabel } from '@/lib/formats'
 
-
 export function ReaderLibraryPanel({ currentId }: { currentId: string }) {
   const navigate = useNavigate()
   const docs = useLiveQuery(() => db.documents.toArray(), [])

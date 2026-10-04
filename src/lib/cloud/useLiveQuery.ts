@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { storeVersion, subscribeStore } from './table'
 
-
-
-
-
 export function useLiveQuery<T>(query: () => Promise<T> | T, deps: unknown[] = []): T | undefined {
   const version = useSyncExternalStore(subscribeStore, storeVersion, storeVersion)
   const [result, setResult] = useState<T | undefined>(undefined)

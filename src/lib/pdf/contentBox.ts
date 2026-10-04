@@ -8,16 +8,11 @@ const INK_THRESHOLD = 225
 
 function samplePages(n: number) {
   if (n <= MAX_SAMPLES) return Array.from({ length: n }, (_, i) => i + 1)
-  
+
   const out = new Set<number>()
   for (let i = 0; i < MAX_SAMPLES; i++) out.add(2 + Math.round((i * (n - 2)) / (MAX_SAMPLES - 1)))
   return [...out].filter((p) => p >= 1 && p <= n)
 }
-
-
-
-
-
 
 export async function detectContentBox(doc: PDFDocumentProxy): Promise<NormBox | null> {
   const boxes: NormBox[] = []
@@ -33,7 +28,7 @@ export async function detectContentBox(doc: PDFDocumentProxy): Promise<NormBox |
       canvas.height = Math.max(1, Math.round(viewport.height))
       ctx.fillStyle = '#fff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
-      
+
       await page.render({ canvas, viewport, intent: 'print' }).promise
       const { data, width: w, height: h } = ctx.getImageData(0, 0, canvas.width, canvas.height)
       let minX = w
@@ -54,7 +49,7 @@ export async function detectContentBox(doc: PDFDocumentProxy): Promise<NormBox |
       }
       if (maxX >= 0) boxes.push({ x: minX / w, y: minY / h, w: (maxX - minX + 1) / w, h: (maxY - minY + 1) / h })
     } catch {
-      
+
     }
   }
   if (!boxes.length) return null
@@ -64,7 +59,7 @@ export async function detectContentBox(doc: PDFDocumentProxy): Promise<NormBox |
   const x2 = Math.min(1, Math.max(...boxes.map((b) => b.x + b.w)) + pad)
   const y2 = Math.min(1, Math.max(...boxes.map((b) => b.y + b.h)) + pad)
   const box = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 }
-  
+
   if (box.w * box.h > 0.93 || box.w < 0.2 || box.h < 0.2) return null
   return box
 }

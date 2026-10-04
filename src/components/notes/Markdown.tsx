@@ -5,10 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import { wikilinksToMarkdown } from '@/lib/wikilinks'
 import { cn } from '@/lib/utils'
 
-
-
-
-
 export const Markdown = memo(function Markdown({ text, className }: { text: string; className?: string }) {
   const navigate = useNavigate()
   return (

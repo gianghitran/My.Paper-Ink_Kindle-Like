@@ -1,11 +1,6 @@
 import { db } from '@/lib/db'
 import type { ReadingState } from '@/types'
 
-
-
-
-
-
 export function getReadingState(docId: string) {
   return db.readingStates.get(docId)
 }

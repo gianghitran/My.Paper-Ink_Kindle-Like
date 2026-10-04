@@ -23,7 +23,6 @@ function Tile({ label, value, icon }: { label: string; value: string; icon: Reac
   )
 }
 
-
 export default function StatsPage() {
   const sessions = useLiveQuery(() => db.sessions.toArray(), [])
   const docs = useLiveQuery(() => db.documents.toArray(), [])
@@ -36,8 +35,7 @@ export default function StatsPage() {
     const week = sessions.filter((s) => s.start >= now - 7 * DAY).reduce((a, s) => a + s.ms, 0)
     const total = sessions.reduce((a, s) => a + s.ms, 0)
     const byDay = msByDay(sessions)
-    
-    
+
     const lastSaturday = startOfToday + (6 - new Date(startOfToday).getDay()) * DAY
     const first = lastSaturday - (WEEKS * 7 - 1) * DAY
     const days: { key: string; ms: number; date: Date; future: boolean }[] = []

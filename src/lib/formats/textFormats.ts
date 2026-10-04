@@ -3,7 +3,6 @@ import { buildEpub, type BuildChapter } from './epubBuilder'
 import { extractDataImages, sanitizeTree, splitByHeadings } from './sanitize'
 import { titleFromFileName, type ConvertResult } from './index'
 
-
 export function decodeText(data: ArrayBuffer): string {
   const b = new Uint8Array(data)
   if (b[0] === 0xff && b[1] === 0xfe) return new TextDecoder('utf-16le').decode(b)
@@ -41,7 +40,6 @@ export async function convertTxt(data: ArrayBuffer, fileName: string): Promise<C
   const lines = text.split('\n')
   const blankRatio = lines.filter((l) => !l.trim()).length / Math.max(1, lines.length)
 
-  
   const paragraphs: string[] = []
   if (blankRatio > 0.15) {
     let cur: string[] = []
@@ -62,7 +60,7 @@ export async function convertTxt(data: ArrayBuffer, fileName: string): Promise<C
 
   const isHeading = (p: string) => p.length < 80 && HEADING_RE.test(p)
   const headingCount = paragraphs.filter(isHeading).length
-  
+
   const firstLine = paragraphs[0] ?? ''
   const titleLine = headingCount >= 2 && firstLine.length < 90 && !isHeading(firstLine) && isHeading(paragraphs[1] ?? '') ? firstLine : null
   if (titleLine) paragraphs.shift()
@@ -77,7 +75,7 @@ export async function convertTxt(data: ArrayBuffer, fileName: string): Promise<C
     }
     if (cur.body.length) chapters.push(cur)
   } else {
-    
+
     let cur: BuildChapter = { title: chapters.length ? `Part 1` : title, body: [] }
     let size = 0
     for (const p of paragraphs) {
@@ -116,7 +114,7 @@ export async function convertHtml(data: ArrayBuffer, fileName: string): Promise<
   const docTitle = doc.querySelector('title')?.textContent?.trim()
   const author = doc.querySelector('meta[name="author"]')?.getAttribute('content')?.trim()
   const lang = doc.documentElement.getAttribute('lang') || guessLang(doc.body?.textContent ?? '')
-  
+
   const main = doc.querySelector('article, main, [role="main"]') ?? doc.body
   const container = doc.createElement('div')
   Array.from(main?.childNodes ?? []).forEach((n) => container.appendChild(n))

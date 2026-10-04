@@ -45,12 +45,12 @@ export default function NotesPage() {
   const docMap = useMemo(() => new Map((docs ?? []).map((d) => [d.id, d])), [docs])
   const noteTags = useMemo(() => Array.from(new Set((notes ?? []).flatMap((n) => n.tags))).sort(), [notes])
   const highlightTags = useMemo(() => {
-    
+
     const noted = new Set((notes ?? []).flatMap((n) => (n.highlightId ? [n.highlightId] : [])))
     const list = (highlights ?? []).filter((h) => filter !== 'highlights' || !noted.has(h.id))
     return Array.from(new Set(list.flatMap((h) => h.tags ?? []))).sort()
   }, [highlights, notes, filter])
-  
+
   const tagGroups = useMemo(() => {
     const groups: { scope: TagScope; label: string; tags: string[] }[] = []
     if (filter !== 'highlights' && noteTags.length) groups.push({ scope: 'note', label: 'Note tags', tags: noteTags })
@@ -79,7 +79,7 @@ export default function NotesPage() {
     const q = query.trim().toLowerCase()
     return out
       .filter((it) => {
-        
+
         if (filter === 'highlights' && (!it.highlight || it.notes.length > 0)) return false
         if (filter === 'notes' && !it.standalone && it.notes.length === 0) return false
         const allNotes = it.standalone ? [it.standalone] : it.notes

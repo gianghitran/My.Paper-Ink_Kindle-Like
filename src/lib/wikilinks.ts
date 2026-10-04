@@ -1,6 +1,5 @@
 const WIKILINK_RE = /\[\[([^[\]|#\n]+)(?:\|([^[\]\n]+))?\]\]/g
 
-
 export function extractWikilinks(text: string): string[] {
   const seen = new Map<string, string>()
   for (const m of text.matchAll(WIKILINK_RE)) {
@@ -9,7 +8,6 @@ export function extractWikilinks(text: string): string[] {
   }
   return [...seen.values()]
 }
-
 
 export function wikilinksToMarkdown(text: string): string {
   return text.replace(WIKILINK_RE, (_m, name: string, alias?: string) => {

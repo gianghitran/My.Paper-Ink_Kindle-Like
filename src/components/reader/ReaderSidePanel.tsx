@@ -373,12 +373,12 @@ export function ReaderSidePanel({
   highlights: Highlight[]
   inkPages?: Map<number, InkStroke[]>
   bookmarks: Bookmark[]
-  
+
   currentPage?: number
   handle: React.RefObject<ReaderHandle | null>
-  
+
   onBeforeJump: () => void
-  
+
   onNavigate: () => void
   onEditNote: (d: NoteDraft) => void
   className?: string

@@ -20,7 +20,6 @@ import {
 import { supabaseConfigured } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-
 export const useAuthFlash = create<{ notice: string | null; error: string | null }>(() => ({ notice: null, error: null }))
 
 function AuthLayout({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -273,7 +272,6 @@ export function SignupPage() {
     </AuthLayout>
   )
 }
-
 
 export function ChangePasswordPage() {
   const navigate = useNavigate()

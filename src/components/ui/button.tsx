@@ -33,7 +33,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ classN
 ))
 Button.displayName = 'Button'
 
-
 export const IconButton = React.forwardRef<HTMLButtonElement, ButtonProps & { label: string; active?: boolean }>(
   ({ label, active, className, variant = 'ghost', size = 'icon', ...props }, ref) => (
     <Button

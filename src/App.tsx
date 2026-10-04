@@ -8,7 +8,6 @@ import { useImport } from '@/hooks/useImport'
 import { RequireAuth } from '@/components/auth/RequireAuth'
 import { ChangePasswordPage, LoginPage, SignupPage } from '@/pages/AuthPages'
 
-
 const ReaderPage = lazy(() => import('@/components/reader/ReaderPage'))
 const GraphPage = lazy(() => import('@/pages/GraphPage'))
 const NotesPage = lazy(() => import('@/pages/NotesPage'))
@@ -19,7 +18,6 @@ const VocabularyPage = lazy(() => import('@/pages/VocabularyPage'))
 interface LaunchParams {
   files: { getFile(): Promise<File> }[]
 }
-
 
 function LaunchQueueHandler() {
   const { importFiles } = useImport()
@@ -42,11 +40,9 @@ export function App() {
   return (
     <HashRouter>
       <Routes>
-        {}
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="change-password" element={<ChangePasswordPage />} />
-        {}
         <Route
           element={
             <RequireAuth>

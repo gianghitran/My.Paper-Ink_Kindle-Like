@@ -42,14 +42,14 @@ interface LayoutItem {
 const OFFSCREEN_X = -50000
 interface ScrollAnchor {
   page: number
-  
+
   offset: number
-  
+
   fx?: number
-  
+
   vx?: number
   vy?: number
-  
+
   offsetX?: number
 }
 
@@ -120,7 +120,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
   const crop = trimMargins && contentBox ? contentBox : null
   const cropRef = useRef(crop)
   cropRef.current = crop
-  
+
   const toItemOffset = useCallback((y: number) => (crop ? clamp((y - crop.y) / crop.h, 0, 1) : y), [crop])
   const overlayRef = useRef<HTMLDivElement>(null)
   const turnRef = useRef<{ dir: 1 | -1; oldSnap: Snapshot[]; style: 'flip' | 'slide' } | null>(null)
@@ -145,7 +145,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
   const restored = useRef(false)
   const resetTransform = useRef(false)
 
-  
+
   useEffect(() => {
     let cancelled = false
     let doc: PDFDocumentProxy | null = null
@@ -166,7 +166,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
       }
       const first = (await getPage(1)).getViewport({ scale: 1 })
       let s: Size[] = Array.from({ length: n }, () => ({ w: first.width, h: first.height }))
-      
+
       if (n <= 1500) {
         const all: Size[] = new Array(n)
         for (let i = 0; i < n; i += 50) {
@@ -198,7 +198,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
             children: map(it.items, level + 1),
           }))
         propsRef.current.onToc(map(outline, 0))
-        
+
         const flat: { label: string; page: number }[] = []
         const walk = async (items: typeof outline, level: number) => {
           for (const it of items ?? []) {
@@ -208,7 +208,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
               const idx = ref0 && typeof ref0 === 'object' ? await doc!.getPageIndex(ref0 as { num: number; gen: number }) : Number.isInteger(ref0) ? (ref0 as number) : null
               if (idx != null) flat.push({ label: it.title || 'Untitled', page: idx + 1 })
             } catch {
-              
+
             }
             if (level < 1) await walk(it.items, level + 1)
           }
@@ -268,7 +268,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [getPage],
   )
 
-  
+
   useLayoutEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -279,13 +279,13 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     return () => ro.disconnect()
   }, [])
 
-  
+
   const numPages = sizes?.length ?? 0
   const padX = box.w < 640 ? 6 : 24
   const padY = box.w < 640 ? 10 : 20
   const ref0 = useMemo(() => (sizes ? mostCommonSize(sizes) : { w: 612, h: 792 }), [sizes])
   const paginated = view.mode === 'paginated'
-  
+
   const twoUp = paginated && numPages > 1 && wantsTwoPages(twoPageSetting, box.w, box.h)
   const spreadStart = useCallback(
     (page: number) => {
@@ -328,7 +328,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
       const contentW = Math.max(box.w, totalW + padX * 2)
       const contentH = Math.max(box.h, maxH + padY * 2)
       let x = (contentW - totalW) / 2
-      
+
       const placed = rtl ? [...pages].reverse() : pages
       const items: LayoutItem[] = placed.map((pg) => {
         const { w, h } = sz(pg)
@@ -365,7 +365,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
 
   const itemFor = useCallback((page: number) => layout?.items.find((i) => i.page === page), [layout])
 
-  
+
   const itemIndexAt = useCallback(
     (y: number) => {
       if (!layout) return 0
@@ -394,7 +394,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [itemFor],
   )
 
-  
+
   const labelFor = useCallback((page: number) => {
     const n = numPagesRef.current
     const pct = n ? Math.round((page / n) * 100) : 0
@@ -463,7 +463,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
   const viewRef = useRef(view)
   viewRef.current = view
 
-  
+
   useLayoutEffect(() => {
     if (!layout || !box.w) return
     if (!restored.current) {
@@ -493,7 +493,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
       resetTransform.current = false
     }
     updateFromScroll()
-    
+
     const t = turnRef.current
     turnRef.current = null
     if (t && overlayRef.current && contentRef.current) {
@@ -515,8 +515,8 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    
-    
+
+
     let raf = 0
     let timer: ReturnType<typeof setTimeout> | null = null
     let scheduled = false
@@ -533,7 +533,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
       raf = requestAnimationFrame(run)
       timer = setTimeout(run, 120)
     }
-    
+
     const onHide = () => {
       if (document.visibilityState === 'hidden') run()
     }
@@ -549,7 +549,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     }
   }, [updateFromScroll])
 
-  
+
   const smooth = theme === 'eink' || inkFilterOn ? 'instant' : 'smooth'
 
   const goToPage = useCallback(
@@ -600,7 +600,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [resolveDest, goToPage, toItemOffset],
   )
 
-  
+
   const turn = useCallback(
     (dir: 1 | -1) => {
       const target = dir > 0 ? spreadFirst + spreadPages(spreadFirst).length : spreadFirst > 1 ? spreadStart(spreadFirst - 1) : 0
@@ -641,7 +641,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     el.scrollBy({ top: -(vh - 48), behavior: smooth })
   }, [paginated, turn, smooth])
 
-  
+
   const gesture = useRef<{ ratio: number; anchor: ScrollAnchor; scale0: number } | null>(null)
 
   const beginZoom = useCallback(
@@ -719,7 +719,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
       if (wheelTimer) clearTimeout(wheelTimer)
       wheelTimer = setTimeout(endZoom, 180)
     }
-    
+
     type GestureEv = Event & { scale: number; clientX: number; clientY: number }
     const onGestureStart = (e: Event) => {
       e.preventDefault()
@@ -759,7 +759,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     }
   }, [beginZoom, updateZoom, endZoom])
 
-  
+
   const lastView = useRef(view)
   if (lastView.current !== view) {
     const prevView = lastView.current
@@ -773,18 +773,18 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
       pendingAnchor.current = { page: item.page, offset: (y - item.top) / item.h, fx: (el.scrollLeft + vx - item.left) / item.w, vx, vy }
     }
     if (prevView.mode !== view.mode && view.mode === 'paginated') {
-      
+
       pendingAnchor.current = { page: current, offset: 0 }
     } else if (prevView.mode !== view.mode) {
       pendingAnchor.current = { page: current, offset: anchorRef.current.offset }
     }
   }
 
-  
+
   const pointerDown = useRef(false)
-  
+
   const suppressSel = useRef(0)
-  
+
   const selectionFromRange = useCallback((range: Range): SelectionInfo | null => {
       const el = scrollRef.current
       if (!el) return null
@@ -875,7 +875,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     }
   }, [])
 
-  
+
   const tapStart = useRef<{ x: number; y: number; t: number; type: string } | null>(null)
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const swipe = useRef<{ x: number; y: number; t: number } | null>(null)
@@ -899,7 +899,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     return m
   }, [highlights])
 
-  
+
   const hitHighlight = (clientX: number, clientY: number): { hits: Highlight[]; rect: DOMRect } | null => {
     const el = scrollRef.current
     if (!el) return null
@@ -940,7 +940,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     else propsRef.current.onToggleChrome()
   }
 
-  
+
   const onTouchStartSwipe = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) {
       swipe.current = null
@@ -976,7 +976,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [goToPage],
   )
 
-  
+
   const onFingerPan = useCallback((dx: number, dy: number) => scrollRef.current?.scrollBy(dx, dy), [])
   const onInkAdd = ink.onAdd
   const onInkErase = ink.onErase
@@ -989,8 +989,8 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [goToDest],
   )
 
-  
-  
+
+
   const pageItems = useCallback(
     async (page: number) => {
       const [pg, tc] = await Promise.all([getPage(page), getText(page)])
@@ -1006,13 +1006,26 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [getPage, getText],
   )
 
-  
+
 
 
 
   const spanPoints = useCallback(
-    async (a: { page: number; x: number; y: number }, b: { page: number; x: number; y: number }) => {
+    async (a: { page: number; x: number; y: number }, b: { page: number; x: number; y: number }, hints: { start?: string; end?: string } = {}) => {
       const rects: NormRect[] = []
+      const snap = (str: string, hint: string | undefined, est: number, atEnd: boolean) => {
+        const h = (hint ?? '').replace(/\s+/g, ' ').trim()
+        for (let n = Math.min(16, h.length); n >= 2; n--) {
+          const needle = atEnd ? h.slice(-n) : h.slice(0, n)
+          let best = -1
+          for (let i = str.indexOf(needle); i >= 0; i = str.indexOf(needle, i + 1)) {
+            const pos = atEnd ? i + n : i
+            if (best < 0 || Math.abs(pos - est) < Math.abs(best - est)) best = pos
+          }
+          if (best >= 0 && Math.abs(best - est) <= 6) return best
+        }
+        return est
+      }
       let text = ''
       const sameLine = (it: { y: number; h: number }, pt: { y: number }) => pt.y >= it.y - it.h * 0.3 && pt.y <= it.y + it.h * 1.3
       for (let page = a.page; page <= b.page; page++) {
@@ -1027,6 +1040,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
           from = i >= 0 ? i : Math.max(0, items.findIndex((it) => it.y > a.y))
           const it = items[from]
           cutStart = it.w > 0 ? clamp(Math.round(((a.x - it.x) / it.w) * it.str.length), 0, it.str.length) : 0
+          cutStart = snap(it.str, hints.start, cutStart, false)
         }
         if (page === b.page) {
           let j = -1
@@ -1037,6 +1051,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
           to = j
           const it = items[Math.max(0, to)]
           cutEnd = it && it.w > 0 ? clamp(Math.round(((b.x - it.x) / it.w) * it.str.length), 0, it.str.length) : Infinity
+          if (it && Number.isFinite(cutEnd)) cutEnd = snap(it.str, hints.end, cutEnd, true)
         }
         for (let k = from; k <= to; k++) {
           const it = items[k]
@@ -1059,7 +1074,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     [pageItems],
   )
 
-  
+
   const edgePoints = (a: Extract<Anchor, { type: 'pdf' }>) => {
     const first = a.rects[0]
     const last = a.rects[a.rects.length - 1]
@@ -1071,7 +1086,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
   const before = (p: { page: number; x: number; y: number }, q: { page: number; x: number; y: number }) =>
     p.page !== q.page ? p.page < q.page : Math.abs(p.y - q.y) > 0.004 ? p.y < q.y : p.x <= q.x
 
-  
+
   const caretAt = (pt: { page: number; x: number; y: number }) => {
     const pageEl = scrollRef.current?.querySelector<HTMLElement>(`.pdf-page[data-page="${pt.page}"] .pdf-page-inner`)
     if (!pageEl) return null
@@ -1104,7 +1119,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
         if (a.type !== 'pdf' || !a.rects.length) return null
         const { start, end } = edgePoints(a)
         const singlePage = start.page === end.page
-        
+
         const s = caretAt(singlePage || side === 0 ? start : { ...start })
         const e = caretAt(singlePage || side === 1 ? end : { ...end })
         const pageEl = (pg: number) => scrollRef.current?.querySelector<HTMLElement>(`.pdf-page[data-page="${pg}"] .textLayer`)
@@ -1114,7 +1129,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
           range.setStart(s.node, s.offset)
           range.setEnd(e.node, e.offset)
         } else {
-          
+
           const layer = pageEl(side === 0 ? start.page : end.page)
           if (!layer || !(side === 0 ? s : e)) return null
           if (side === 0) {
@@ -1139,7 +1154,8 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
         if (!edge || !inner) return null
         const ir = inner.getBoundingClientRect()
         const pt = { page: side === 0 ? start.page : end.page, x: ((side === 0 ? edge.left + 0.5 : edge.right - 0.5) - ir.left) / ir.width, y: (edge.top + edge.height / 2 - ir.top) / ir.height }
-        const span = await spanPoints(side === 0 ? pt : start, side === 0 ? end : pt)
+        const edgeText = moved.toString()
+        const span = await spanPoints(side === 0 ? pt : start, side === 0 ? end : pt, side === 0 ? { start: edgeText, end: a.quote.exact } : { start: a.quote.exact, end: edgeText })
         return span ? { anchor: { type: 'pdf', page: span.rects[0].page, rects: span.rects, quote: { exact: span.text.slice(0, 2000), prefix: a.quote.prefix, suffix: a.quote.suffix } }, text: span.text } : null
       },
       spanAnchors: async (a, b) => {
@@ -1148,8 +1164,9 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
         const eb = edgePoints(b)
         const startFirst = before(ea.start, eb.start)
         const from = startFirst ? ea.start : eb.start
-        const to = before(ea.end, eb.end) ? eb.end : ea.end
-        const span = await spanPoints(from, to)
+        const endB = before(ea.end, eb.end)
+        const to = endB ? eb.end : ea.end
+        const span = await spanPoints(from, to, { start: (startFirst ? a : b).quote.exact, end: (endB ? b : a).quote.exact })
         if (!span) return null
         const first = span.rects[0]
         return {
@@ -1241,7 +1258,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
         if ((e.target as HTMLElement).closest('a,button,input,textarea')) return
         const { clientX, clientY } = e
         if (s.type === 'mouse') {
-          
+
           if (clickTimer.current) clearTimeout(clickTimer.current)
           clickTimer.current = setTimeout(() => handleTap(clientX, clientY), 230)
         } else {
@@ -1301,7 +1318,6 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
         </div>
       )}
     </div>
-    {}
     <div ref={overlayRef} className="turn-overlay" aria-hidden />
     </div>
   )

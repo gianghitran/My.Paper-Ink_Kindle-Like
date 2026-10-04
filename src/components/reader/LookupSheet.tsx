@@ -13,7 +13,7 @@ import type { Anchor } from '@/types'
 
 export interface LookupRequest {
   term: string
-  
+
   lang?: string | null
   context?: string
   docId?: string
@@ -31,7 +31,6 @@ const WIKI_LANGS = [
 ]
 
 type State<T> = { status: 'loading' } | { status: 'done'; data: T | null; offline: boolean } | { status: 'error'; message: string }
-
 
 export function LookupSheet({ request, onClose }: { request: LookupRequest | null; onClose: () => void }) {
   const { isPhone } = useViewport()

@@ -1,14 +1,9 @@
-
-
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-
 
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
-
-
 
 type IterableStream = ReadableStream & { [Symbol.asyncIterator]?: () => AsyncIterator<unknown>; values?: () => AsyncIterator<unknown> }
 if (typeof ReadableStream !== 'undefined' && !(ReadableStream.prototype as IterableStream)[Symbol.asyncIterator]) {
@@ -28,7 +23,6 @@ if (typeof ReadableStream !== 'undefined' && !(ReadableStream.prototype as Itera
   if (!(ReadableStream.prototype as IterableStream).values) Object.defineProperty(ReadableStream.prototype, 'values', { value: iterate, configurable: true, writable: true })
 }
 
-
 function assetUrl(path: string) {
   return new URL(path, document.baseURI).href
 }
@@ -36,8 +30,7 @@ function assetUrl(path: string) {
 export function openPdf(data: Uint8Array): Promise<PDFDocumentProxy> {
   return pdfjsLib.getDocument({
     data,
-    
-    
+
     enableXfa: false,
     cMapUrl: assetUrl('pdfjs/cmaps/'),
     cMapPacked: true,

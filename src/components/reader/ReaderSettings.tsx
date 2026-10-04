@@ -25,7 +25,6 @@ function Row({ label, value, children }: { label: string; value?: string; childr
   )
 }
 
-
 export function ThemePicker() {
   const settings = useSettings((s) => s.settings)
   const update = useSettings((s) => s.update)
@@ -243,7 +242,6 @@ export function ReaderSettings({
   )
 }
 
-
 export function BookLayoutSettings({ format }: { format?: DocFormat }) {
   const { settings, update } = useSettings()
   return (
@@ -287,7 +285,6 @@ export function BookLayoutSettings({ format }: { format?: DocFormat }) {
   )
 }
 
-
 export function StatusBarSettings() {
   const sb = useSettings((s) => s.settings.statusBar)
   const update = useSettings((s) => s.update)
@@ -313,7 +310,6 @@ export function StatusBarSettings() {
     </Row>
   )
 }
-
 
 export function InkFilterSettings() {
   const settings = useSettings((s) => s.settings)
@@ -352,7 +348,6 @@ export function InkFilterSettings() {
     </div>
   )
 }
-
 
 export function HighlightSettings() {
   const drawer = useSettings((s) => s.settings.highlightDrawer)

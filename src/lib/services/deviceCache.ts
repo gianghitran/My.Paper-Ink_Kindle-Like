@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 const DB_NAME = 'paperink-file-cache'
 const FILES = 'files' 
 const INDEX = 'index' 
@@ -68,14 +56,12 @@ function run<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore)
   )
 }
 
-
 export async function getCachedFile(path: string): Promise<Blob | null> {
   const e = await run<FileEntry>(FILES, 'readonly', (s) => s.get(path))
   if (!e) return null
   void run(INDEX, 'readwrite', (s) => s.put({ path, size: e.bytes.byteLength, lastUsed: Date.now() } satisfies IndexEntry))
   return new Blob([e.bytes], { type: e.type })
 }
-
 
 export async function putCachedFile(path: string, blob: Blob) {
   try {
@@ -84,7 +70,7 @@ export async function putCachedFile(path: string, blob: Blob) {
     await run(INDEX, 'readwrite', (s) => s.put({ path, size: bytes.byteLength, lastUsed: Date.now() } satisfies IndexEntry))
     await evict()
   } catch {
-    
+
   }
 }
 
@@ -96,12 +82,10 @@ export async function removeCachedFiles(paths: string[]) {
   }
 }
 
-
 export async function clearDeviceCache() {
   await run(FILES, 'readwrite', (s) => s.clear())
   await run(INDEX, 'readwrite', (s) => s.clear())
 }
-
 
 export async function bindDeviceCache(userId: string) {
   const owner = await run<string>(META, 'readonly', (s) => s.get('owner'))
@@ -121,7 +105,7 @@ async function evict() {
     const est = await navigator.storage?.estimate?.()
     if (est?.quota) limit = Math.min(limit, est.quota * 0.6)
   } catch {
-    
+
   }
   const all = (await run<IndexEntry[]>(INDEX, 'readonly', (s) => s.getAll())) ?? []
   let total = all.reduce((a, e) => a + e.size, 0)
@@ -135,7 +119,6 @@ async function evict() {
   }
   await removeCachedFiles(drop)
 }
-
 
 export async function pruneDeviceCache(keep: Set<string>) {
   const all = (await run<IndexEntry[]>(INDEX, 'readonly', (s) => s.getAll())) ?? []

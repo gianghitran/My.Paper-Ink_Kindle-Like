@@ -24,9 +24,9 @@ interface LinkInfo {
 }
 
 interface Props {
-  
+
   offscreen?: boolean
-  
+
   crop?: NormBox | null
   pageNumber: number
   scale: number
@@ -39,10 +39,10 @@ interface Props {
   getText: (n: number) => Promise<TextContent>
   highlights: PageHighlight[] | undefined
   searchTerm: string | null
-  
+
   searchFocus: { seq: number; index: number } | null
   onInternalLink: (dest: unknown) => void
-  
+
   baseWidth: number
   baseHeight: number
   inkActive: boolean
@@ -61,7 +61,7 @@ const NO_STROKES: InkStroke[] = []
 const SAFE_URL = /^(https?:|mailto:)/i
 
 function releaseCanvas(c: HTMLCanvasElement) {
-  
+
   c.width = 0
   c.height = 0
 }
@@ -99,7 +99,6 @@ function applySearchMarks(container: HTMLElement, term: string | null) {
   })
   return marks
 }
-
 
 function PdfHighlights({ highlights }: { highlights: PageHighlight[] }) {
   const noteMarker = useSettings((st) => st.settings.noteMarker)
@@ -177,7 +176,6 @@ export const PdfPage = memo(function PdfPage({
   const [textVersion, setTextVersion] = useState(0)
   const [links, setLinks] = useState<LinkInfo[]>([])
 
-  
   useEffect(() => {
     const host = canvasHost.current
     if (!render || !host) return
@@ -216,7 +214,6 @@ export const PdfPage = memo(function PdfPage({
     }
   }, [render, scale, pageNumber, getPage])
 
-  
   useEffect(() => {
     if (render) return
     const host = canvasHost.current
@@ -225,7 +222,6 @@ export const PdfPage = memo(function PdfPage({
     textRef.current?.replaceChildren()
   }, [render])
 
-  
   useEffect(() => {
     const container = textRef.current
     if (!render || !container) return
@@ -235,7 +231,7 @@ export const PdfPage = memo(function PdfPage({
       const [page, text] = await Promise.all([getPage(pageNumber), getText(pageNumber)])
       if (cancelled) return
       container.replaceChildren()
-      
+
       if (!text.items.length) return
       const viewport = page.getViewport({ scale })
       layer = new pdfjsLib.TextLayer({ textContentSource: text, container, viewport })
@@ -254,7 +250,6 @@ export const PdfPage = memo(function PdfPage({
     }
   }, [render, scale, pageNumber, getPage, getText])
 
-  
   useEffect(() => {
     const container = textRef.current
     if (!container) return
@@ -270,7 +265,6 @@ export const PdfPage = memo(function PdfPage({
     }
   }, [])
 
-  
   const focusedSeq = useRef(-1)
   useEffect(() => {
     const container = textRef.current
@@ -283,7 +277,6 @@ export const PdfPage = memo(function PdfPage({
     }
   }, [searchTerm, searchFocus, textVersion, render])
 
-  
   useEffect(() => {
     if (!render) return
     let cancelled = false
@@ -338,7 +331,6 @@ export const PdfPage = memo(function PdfPage({
         } as React.CSSProperties
       }
     >
-      {}
       <div
         className="pdf-page-inner absolute"
         style={

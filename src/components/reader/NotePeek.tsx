@@ -5,10 +5,6 @@ import { Markdown } from '@/components/notes/Markdown'
 import { InkPreview } from '@/components/ink/InkPreview'
 import type { Note } from '@/types'
 
-
-
-
-
 export function NotePeek({
   note,
   quote,

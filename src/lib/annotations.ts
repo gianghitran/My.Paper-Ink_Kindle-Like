@@ -14,7 +14,6 @@ export const HIGHLIGHT_COLORS: { id: HighlightColor; label: string }[] = [
 export const hlFill = (c: HighlightColor) => `var(--hl-${c})`
 export const hlSolid = (c: HighlightColor) => `var(--hl-${c}-solid)`
 
-
 export function hlRgba(c: HighlightColor, theme: string) {
   if (theme === 'eink') {
     return { yellow: '#000000', green: '#000000', blue: '#000000', pink: '#000000', purple: '#000000' }[c]
@@ -31,7 +30,7 @@ export async function createHighlight(input: {
   drawer?: HighlightDrawer
 }): Promise<Highlight> {
   const now = Date.now()
-  
+
   const { drawer, ...rest } = input
   const hl: Highlight = { id: uid('h'), ...rest, ...(drawer && drawer !== 'lighten' ? { drawer } : {}), createdAt: now, updatedAt: now }
   await db.highlights.add(hl)
@@ -45,7 +44,6 @@ export function updateHighlightColor(id: string, color: HighlightColor) {
 export function updateHighlightDrawer(id: string, drawer: HighlightDrawer) {
   return db.highlights.update(id, { drawer, updatedAt: Date.now() })
 }
-
 
 export function unionPdfAnchors(hits: Highlight[]): { anchor: Anchor; text: string } | null {
   const pdf = [...hits].filter((h) => h.anchor.type === 'pdf').sort((a, b) => a.order - b.order)
@@ -62,10 +60,6 @@ export function unionPdfAnchors(hits: Highlight[]): { anchor: Anchor; text: stri
     text,
   }
 }
-
-
-
-
 
 export async function mergeHighlights(hits: Highlight[], merged: { anchor: Anchor; text: string }) {
   const sorted = [...hits].sort((a, b) => a.order - b.order)
@@ -89,7 +83,6 @@ export async function mergeHighlights(hits: Highlight[], merged: { anchor: Ancho
   for (const h of rest) await deleteHighlight(h.id)
   return keep.id
 }
-
 
 export async function deleteHighlight(id: string) {
   const notes = await db.notes.where('highlightId').equals(id).toArray()
@@ -133,14 +126,12 @@ export async function createNodeFromHighlight(highlightId: string) {
   return ensureHighlightNode(highlightId)
 }
 
-
 export function noteHref(n: Pick<Note, 'id' | 'docId' | 'highlightId' | 'location'>) {
   if (!n.docId) return null
   if (n.highlightId) return highlightHref({ docId: n.docId, id: n.highlightId })
   if (n.location) return `/read/${n.docId}?note=${encodeURIComponent(n.id)}`
   return `/read/${n.docId}`
 }
-
 
 export function highlightHref(h: Pick<Highlight, 'docId' | 'id'>) {
   return `/read/${h.docId}?hl=${encodeURIComponent(h.id)}`

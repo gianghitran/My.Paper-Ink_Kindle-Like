@@ -9,7 +9,6 @@ function href(el: Element) {
   return el.getAttributeNS(XLINK, 'href') ?? el.getAttribute('l:href') ?? el.getAttribute('xlink:href') ?? el.getAttribute('href') ?? ''
 }
 
-
 function decodeFb2(data: ArrayBuffer) {
   const head = new TextDecoder('latin1').decode(new Uint8Array(data, 0, Math.min(200, data.byteLength)))
   const enc = head.match(/encoding=["']([\w-]+)["']/i)?.[1]
@@ -17,7 +16,7 @@ function decodeFb2(data: ArrayBuffer) {
     try {
       return new TextDecoder(enc.toLowerCase()).decode(data)
     } catch {
-      
+
     }
   }
   return decodeText(data)
@@ -49,7 +48,6 @@ export async function convertFb2(data: ArrayBuffer, fileName: string): Promise<C
     : []
   const lang = info ? q(info, 'lang')[0]?.textContent?.trim() : undefined
 
-  
   const images: BuildImage[] = []
   const imageById = new Map<string, string>()
   q(xml, 'binary').forEach((b, i) => {
@@ -63,14 +61,14 @@ export async function convertFb2(data: ArrayBuffer, fileName: string): Promise<C
       images.push({ name, mime, data: Uint8Array.from(bin, (c) => c.charCodeAt(0)) })
       imageById.set(id, name)
     } catch {
-      
+
     }
   })
   const coverRef = info ? q(info, 'coverpage')[0]?.getElementsByTagName('image')[0] : undefined
   const coverName = coverRef ? imageById.get(href(coverRef).replace(/^#/, '')) : undefined
 
   const doc = document.implementation.createHTMLDocument('')
-  
+
   const bodies = q(xml, 'body')
   const mainBodies = bodies.filter((b) => !/notes|comments/i.test(b.getAttribute('name') ?? ''))
   const noteBodies = bodies.filter((b) => /notes|comments/i.test(b.getAttribute('name') ?? ''))
@@ -120,7 +118,7 @@ export async function convertFb2(data: ArrayBuffer, fileName: string): Promise<C
         make('code')
         break
       case 'title': {
-        
+
         const h = doc.createElement('h2')
         h.textContent = Array.from(e.children)
           .map((c) => c.textContent?.trim())
@@ -199,8 +197,7 @@ export async function convertFb2(data: ArrayBuffer, fileName: string): Promise<C
     const t = q(section, 'title')[0]?.textContent?.replace(/\s+/g, ' ').trim()
     chapters.push({ title: t?.slice(0, 120) || fallback, body })
   }
-  
-  
+
   const notesIndex = mainBodies.reduce((n, b) => n + Math.max(1, Array.from(b.children).filter((c) => c.localName === 'section').length), 0)
   notesChapterFile = `ch${String(notesIndex + 1).padStart(4, '0')}.xhtml`
   for (const b of mainBodies) {

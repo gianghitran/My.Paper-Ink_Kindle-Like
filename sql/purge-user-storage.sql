@@ -1,17 +1,4 @@
-
-
-
-
-
-
-
-
-
-
-
 create extension if not exists pg_net with schema extensions;
-
-
 
 do $$
 begin
@@ -20,7 +7,6 @@ begin
                                 'Shared secret for the purge-user Edge Function');
   end if;
 end $$;
-
 
 create or replace function public.paperink_purge_user_storage()
 returns trigger
@@ -52,10 +38,4 @@ drop trigger if exists profiles_purge_storage on public.profiles;
 create trigger profiles_purge_storage
   after delete on public.profiles
   for each row execute function public.paperink_purge_user_storage();
-
-
-
-
-
-
 

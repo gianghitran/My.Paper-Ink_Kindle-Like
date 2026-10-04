@@ -8,12 +8,7 @@ import { readFileSync } from 'node:fs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
-
-
-
 const base = process.env.BASE_PATH || './'
-
-
 
 export default defineConfig(({ mode }) => ({
   base,
@@ -67,7 +62,7 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2,wasm,bcmap,pfb,ttf}'],
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         navigateFallback: 'index.html',
-        
+
         navigateFallbackDenylist: [/\/[^/?#]+\.[a-z0-9]+(?:[?#].*)?$/i],
         cleanupOutdatedCaches: true,
       },

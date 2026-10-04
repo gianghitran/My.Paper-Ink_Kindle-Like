@@ -13,7 +13,6 @@ function hashCode(s: string) {
   return Math.abs(h)
 }
 
-
 function useCoverBlob(doc: Pick<DocumentRecord, 'cover' | 'coverPath'>) {
   const [blob, setBlob] = useState<Blob | undefined>(doc.cover)
   useEffect(() => {

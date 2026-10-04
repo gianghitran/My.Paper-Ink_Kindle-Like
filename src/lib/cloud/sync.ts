@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 
 export interface RemoteSpec {
   table: string
-  
+
   keyColumns: string[]
 }
 
@@ -15,9 +15,9 @@ type Op =
 interface SyncState {
   pending: number
   syncing: boolean
-  
+
   lastError: string | null
-  
+
   offline: boolean
 }
 
@@ -35,7 +35,6 @@ const missingColumnListeners: ((table: string, column: string) => void)[] = []
 export function onMissingColumn(fn: (table: string, column: string) => void) {
   missingColumnListeners.push(fn)
 }
-
 
 const DEBOUNCE_MS = 700
 const BATCH = 200
@@ -56,10 +55,8 @@ function schedule(delay = DEBOUNCE_MS) {
   timer = setTimeout(() => void run(), delay)
 }
 
-
 export function enqueue(op: Op) {
-  
-  
+
   if (!accepting) return
   const k = opKey(op)
   for (let i = queue.length - 1; i >= 0; i--) {
@@ -84,17 +81,12 @@ function isNetworkError(err: { message?: string; code?: string; status?: number 
   return status === 0 || status >= 500 || /fetch|network|timeout|abort|Load failed/i.test(err.message ?? '')
 }
 
-
 const REQUEST_TIMEOUT_MS = 20_000
 const timeoutSignal = () => {
   const c = new AbortController()
   setTimeout(() => c.abort(), REQUEST_TIMEOUT_MS)
   return c.signal
 }
-
-
-
-
 
 const missingColumns = new Map<string, Set<string>>()
 const withoutMissing = (table: string, row: Record<string, unknown>) => {
@@ -112,7 +104,7 @@ async function send(batch: Op[]) {
     const onConflict = first.spec.keyColumns.join(',')
     const rows = batch.map((o) => (o as Extract<Op, { kind: 'upsert' }>).row)
     let { error, status } = await upsertRows(table, rows, onConflict)
-    
+
     const col = error?.code === 'PGRST204' ? /'([a-z_]+)' column/i.exec(error.message ?? '')?.[1] : undefined
     if (col) {
       if (!missingColumns.has(table)) missingColumns.set(table, new Set())
@@ -120,7 +112,7 @@ async function send(batch: Op[]) {
       missingColumnListeners.forEach((f) => f(table, col))
       ;({ error, status } = await upsertRows(table, rows, onConflict))
     }
-    
+
     if (error && !isNetworkError({ ...error, status }) && rows.length > 1) {
       let firstError: { message?: string; code?: string; status?: number } | null = null
       for (const row of rows) {
@@ -132,7 +124,7 @@ async function send(batch: Op[]) {
     }
     return error ? { ...error, status } : null
   }
-  
+
   const spec = first.spec
   if (spec.keyColumns.length === 1) {
     const col = spec.keyColumns[0]
@@ -167,7 +159,7 @@ async function run() {
       }
       const err = await send(batch)
       if (err && isNetworkError(err)) {
-        
+
         useSyncStatus.setState({ offline: true })
         backoff = Math.min(30_000, backoff ? backoff * 2 : 1_000)
         running = false
@@ -176,13 +168,13 @@ async function run() {
         return
       }
       backoff = 0
-      
+
       for (const o of batch) {
         const i = queue.indexOf(o)
         if (i >= 0) queue.splice(i, 1)
       }
       if (err) {
-        
+
         const message = `${head.spec.table}: ${err.message ?? 'write rejected'}`
         useSyncStatus.setState({ lastError: message })
         console.warn('[sync] write rejected', head.spec.table, err.code ?? '', err.message ?? '')
@@ -198,7 +190,6 @@ async function run() {
   }
 }
 
-
 export function flush(): Promise<void> {
   if (!queue.length && !running) return Promise.resolve()
   const p = new Promise<void>((resolve) => waiters.push(resolve))
@@ -211,11 +202,9 @@ export function pendingWrites() {
   return queue.length
 }
 
-
 export function acceptWrites() {
   accepting = true
 }
-
 
 export function clearQueue() {
   accepting = false
@@ -236,7 +225,7 @@ if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') kick()
   })
-  
+
   window.addEventListener('beforeunload', (e) => {
     if (queue.length) {
       e.preventDefault()

@@ -1,18 +1,5 @@
-
-
-
-
-
-
-
-
-
-
-
-
 export const BUCKET = 'documents'
 const PAGE = 1000
-
 
 export interface StorageLike {
   list(prefix: string, opts: { limit: number; offset: number }): Promise<{ data: { name: string; id: string | null }[] | null; error: { message: string } | null }>
@@ -20,7 +7,6 @@ export interface StorageLike {
 }
 
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
-
 
 export async function listAll(storage: StorageLike, prefix: string): Promise<string[]> {
   const out: string[] = []
@@ -36,11 +22,10 @@ export async function listAll(storage: StorageLike, prefix: string): Promise<str
   }
 }
 
-
 export async function purgeUserObjects(storage: StorageLike, userId: string) {
   if (!isUuid(userId)) throw new Error('invalid user id')
   const paths = await listAll(storage, userId)
-  
+
   const own = paths.filter((p) => p.startsWith(`${userId}/`) && !p.includes('..'))
   for (let i = 0; i < own.length; i += PAGE) {
     const { error } = await storage.remove(own.slice(i, i + PAGE))
@@ -50,7 +35,6 @@ export async function purgeUserObjects(storage: StorageLike, userId: string) {
 }
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
-
 
 function sameSecret(a: string, b: string) {
   if (a.length !== b.length) return false
@@ -71,7 +55,6 @@ export async function handle(req: Request, env: (k: string) => string | undefine
   const { createClient } = await import('npm:@supabase/supabase-js@2')
   const admin = createClient(env('SUPABASE_URL')!, env('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } })
 
-  
   const { data: profile, error: profileError } = await admin.from('profiles').select('user_id').eq('user_id', userId).maybeSingle()
   if (profileError) return json(500, { error: 'profile check failed' })
   if (profile) return json(409, { error: 'profile still exists' })
@@ -79,7 +62,7 @@ export async function handle(req: Request, env: (k: string) => string | undefine
   try {
     const removed = await purgeUserObjects(admin.storage.from(BUCKET) as unknown as StorageLike, userId)
     const { error: delError } = await admin.auth.admin.deleteUser(userId)
-    
+
     const userDeleted = !delError || /not.?found/i.test(delError.message)
     if (!userDeleted) console.error('purge-user: auth delete failed', userId, delError?.message)
     console.log('purge-user', userId, 'objects removed:', removed)

@@ -5,30 +5,29 @@ import type { InkSize, InkToolName } from '@/store/settings'
 import type { InkStroke } from '@/types'
 
 export interface InkCanvasProps {
-  
+
   width: number
   height: number
   strokes: InkStroke[]
-  
+
   active: boolean
   tool: InkToolName
   color: string
   size: InkSize
-  
+
   fingersDraw: boolean
   onAdd: (stroke: InkStroke) => void
   onErase: (ids: string[]) => void
-  
+
   onFingerPan?: (dx: number, dy: number) => void
   className?: string
 }
-
 
 function capture(el: Element, pointerId: number) {
   try {
     el.setPointerCapture(pointerId)
   } catch {
-    
+
   }
 }
 
@@ -40,10 +39,6 @@ interface Drawing {
   size: number
   points: number[]
 }
-
-
-
-
 
 export const InkCanvas = memo(function InkCanvas({
   width,
@@ -70,8 +65,6 @@ export const InkCanvas = memo(function InkCanvas({
   const momentum = useRef(0)
   const [, rerender] = useReducer((x: number) => x + 1, 0)
 
-  
-  
   const nativeFingerPan = active && !fingersDraw && isIOS() && !hasPenPanConflict()
   const touchAction = !active ? undefined : nativeFingerPan ? 'pan-x pan-y' : 'none'
 
@@ -166,7 +159,7 @@ export const InkCanvas = memo(function InkCanvas({
         const draws = e.pointerType !== 'touch' || fingersDraw
         cancelAnimationFrame(momentum.current)
         if (!draws) {
-          
+
           if (!nativeFingerPan && onFingerPan && touches.current.size === 1) {
             pan.current = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), vx: 0, vy: 0 }
             capture(e.currentTarget, e.pointerId)
@@ -180,7 +173,7 @@ export const InkCanvas = memo(function InkCanvas({
         const t = tool === 'highlighter' ? 'highlighter' : 'pen'
         drawing.current = {
           pointerId: e.pointerId,
-          
+
           erasing: tool === 'eraser' || (e.buttons & 32) !== 0,
           tool: t,
           color,
@@ -230,7 +223,7 @@ export const InkCanvas = memo(function InkCanvas({
         touches.current.delete(e.pointerId)
         if (drawing.current?.pointerId === e.pointerId) {
           if (e.pointerType === 'pen' && nativeFingerPan) {
-            
+
             markPenPanConflict()
             rerender()
           }
@@ -239,7 +232,7 @@ export const InkCanvas = memo(function InkCanvas({
         if (pan.current?.id === e.pointerId) pan.current = null
       }}
       onClick={(e) => {
-        
+
         if (active) e.stopPropagation()
       }}
     >

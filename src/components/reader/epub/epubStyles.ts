@@ -16,10 +16,6 @@ const INK: Record<Theme, { fg: string; link: string; selection: string }> = {
   dark: { fg: '#d6d1c7', link: '#93c5fd', selection: 'rgba(147,197,253,.3)' },
 }
 
-
-
-
-
 export function buildEpubCss(s: EpubSettings, theme: Theme): string {
   const ink = INK[theme]
   const font = EPUB_FONTS[s.font].stack

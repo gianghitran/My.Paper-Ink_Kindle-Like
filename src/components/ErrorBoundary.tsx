@@ -2,16 +2,14 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-
 const isChunkError = (err: unknown) =>
   /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk/i.test(String((err as Error)?.message ?? err))
 
 interface Props {
   children: ReactNode
-  
+
   resetKey?: string
 }
-
 
 export class ErrorBoundary extends Component<Props, { error: unknown }> {
   state = { error: null as unknown }

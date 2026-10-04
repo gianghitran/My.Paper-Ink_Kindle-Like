@@ -1,9 +1,5 @@
 import type { GraphEdge, GraphNode } from '@/types'
 
-
-
-
-
 export function forceLayout(nodes: GraphNode[], edges: GraphEdge[], iterations = 300) {
   const n = nodes.length
   if (n === 0) return new Map<string, { x: number; y: number }>()
@@ -13,7 +9,7 @@ export function forceLayout(nodes: GraphNode[], edges: GraphEdge[], iterations =
     const r = 40 * Math.sqrt(n)
     return { x: Number.isFinite(nd.x) ? nd.x : Math.cos(a) * r, y: Number.isFinite(nd.y) ? nd.y : Math.sin(a) * r }
   })
-  
+
   const spread = Math.max(...pos.map((p) => Math.abs(p.x))) + Math.max(...pos.map((p) => Math.abs(p.y)))
   if (spread < 1) pos.forEach((p, i) => ((p.x = Math.cos((i / n) * 6.283) * 200), (p.y = Math.sin((i / n) * 6.283) * 200)))
 
@@ -51,7 +47,7 @@ export function forceLayout(nodes: GraphNode[], edges: GraphEdge[], iterations =
       disp[b].y += (dy / dist) * f
     }
     for (let i = 0; i < n; i++) {
-      
+
       disp[i].x -= pos[i].x * 0.02
       disp[i].y -= pos[i].y * 0.02
       const d = Math.max(0.01, Math.hypot(disp[i].x, disp[i].y))

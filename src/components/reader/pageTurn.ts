@@ -8,11 +8,6 @@ export interface Snapshot {
   height: number
 }
 
-
-
-
-
-
 export function snapshotPages(pageEls: HTMLElement[], overlay: HTMLElement): Snapshot[] {
   const o = overlay.getBoundingClientRect()
   return pageEls
@@ -23,7 +18,7 @@ export function snapshotPages(pageEls: HTMLElement[], overlay: HTMLElement): Sna
       const left = r.left - o.left
       const top = r.top - o.top
       Object.assign(d.style, { position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${r.width}px`, height: `${r.height}px`, margin: '0' })
-      
+
       const innerSrc = pe.querySelector<HTMLElement>('.pdf-page-inner')
       const inner = document.createElement('div')
       inner.className = 'absolute'
@@ -75,10 +70,6 @@ function shadeOf(s: Snapshot) {
   return s.el.querySelector<HTMLElement>('.turn-shade')!
 }
 
-
-
-
-
 export function playTurn({
   overlay,
   content,
@@ -125,7 +116,7 @@ export function playTurn({
     add(oldG.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-dir * W}px)` }], opts))
     add(newG.animate([{ transform: `translateX(${dir * W}px)` }, { transform: 'translateX(0)' }], opts))
   } else if (oldSnap.length === 2 && newSnap.length === 2) {
-    
+
     const D = 560
     const [oldL, oldR] = oldSnap
     const [newL, newR] = newSnap
@@ -142,11 +133,11 @@ export function playTurn({
     add(shadeOf(leaf1).animate([{ opacity: 0 }, { opacity: 0.55 }], { duration: D / 2, easing: EASE_IN, fill: 'both' }))
     add(leaf2.el.animate([{ transform: `rotateY(${-a}deg)` }, { transform: 'rotateY(0deg)' }], { duration: D / 2, delay: D / 2, easing: EASE_OUT, fill: 'both' }))
     add(shadeOf(leaf2).animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: D / 2, delay: D / 2, easing: EASE_OUT, fill: 'both' }))
-    
+
     const revealed = dir > 0 ? newR : newL
     add(shadeOf(revealed).animate([{ opacity: 0.3 }, { opacity: 0 }], { duration: D / 2, easing: 'ease-out', fill: 'both' }))
   } else {
-    
+
     const D = 480
     const oldG = group(oldSnap)
     const newG = group(newSnap)
@@ -177,7 +168,7 @@ export function playTurn({
   Promise.all(anims.map((a) => a.finished))
     .then(cleanup)
     .catch(cleanup)
-  
+
   setTimeout(cleanup, 1200)
   return { finish: cleanup }
 }

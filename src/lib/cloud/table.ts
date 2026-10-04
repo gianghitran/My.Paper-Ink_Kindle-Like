@@ -4,7 +4,6 @@ import { enqueue, flush, type RemoteSpec } from './sync'
 type Row = Record<string, unknown>
 type Key = string
 
-
 let version = 0
 const listeners = new Set<() => void>()
 export const storeVersion = () => version
@@ -24,9 +23,9 @@ function notify() {
 }
 
 export interface TableDef<T> {
-  
+
   key: keyof T & string
-  
+
   remote: (RemoteSpec & { toRow: (rec: T) => Row; fromRow: (row: Row) => T; match: (key: Key) => Row }) | null
 }
 
@@ -38,7 +37,6 @@ function compare(a: unknown, b: unknown) {
   if (b === undefined || b === null) return 1
   return (a as number | string) < (b as number | string) ? -1 : 1
 }
-
 
 export class Collection<T> {
   constructor(
@@ -64,7 +62,7 @@ export class Collection<T> {
   async primaryKeys() {
     return this.rows().map((r) => r[this.table.def.key] as unknown as Key)
   }
-  
+
   async keys() {
     return this.rows().map((r) => (this.orderField ? r[this.orderField] : r[this.table.def.key]))
   }
@@ -95,7 +93,6 @@ export class CloudTable<T> {
     return [...this.rows.values()]
   }
 
-  
   async get(key: Key) {
     const r = this.rows.get(String(key))
     return r === undefined ? undefined : clone(r)
@@ -127,7 +124,6 @@ export class CloudTable<T> {
     return c
   }
 
-  
   private write(rec: T) {
     const key = this.keyOf(rec)
     this.rows.set(key, clone(rec))
@@ -160,11 +156,6 @@ export class CloudTable<T> {
     for (const k of keys) await this.delete(k)
   }
 
-  
-
-
-
-
   async putNow(rec: T) {
     if (!this.def.remote) return this.write(rec)
     await flush()
@@ -185,7 +176,6 @@ export class CloudTable<T> {
     if (error) throw new Error(error.message)
   }
 
-  
   forget(match: (rec: T) => boolean) {
     let changed = false
     for (const [k, r] of this.rows) {
@@ -196,7 +186,7 @@ export class CloudTable<T> {
     }
     if (changed) notify()
   }
-  
+
   patchLocal(match: (rec: T) => boolean, patch: Partial<T>) {
     let changed = false
     for (const [k, r] of this.rows) {
@@ -208,11 +198,9 @@ export class CloudTable<T> {
     if (changed) notify()
   }
 
-  
-  
   async hydrate() {
     if (!this.def.remote) return
-    
+
     const next = new Map<Key, T>()
     const pageSize = 1000
     for (let from = 0; ; from += pageSize) {
@@ -220,7 +208,7 @@ export class CloudTable<T> {
       if (error) throw new Error(`${this.def.remote.table}: ${error.message}`)
       for (const row of data ?? []) {
         const rec = this.def.remote.fromRow(row as Row)
-        
+
         const prev = this.rows.get(this.keyOf(rec))
         next.set(this.keyOf(rec), prev ? { ...prev, ...rec } : rec)
       }
@@ -230,7 +218,7 @@ export class CloudTable<T> {
     for (const [k, v] of next) this.rows.set(k, v)
     notify()
   }
-  
+
   reset() {
     this.rows.clear()
     notify()

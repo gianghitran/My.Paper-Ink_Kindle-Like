@@ -1,17 +1,12 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { imageSize, listComicPages } from './comic'
 
-
 const UNIT_WIDTH = 900
 const BITMAP_CACHE = 6
 
 class RenderingCancelled extends Error {
   name = 'RenderingCancelledException'
 }
-
-
-
-
 
 export async function openComic(file: Blob): Promise<PDFDocumentProxy> {
   const pages = await listComicPages(await file.arrayBuffer())

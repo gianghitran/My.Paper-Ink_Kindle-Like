@@ -10,16 +10,11 @@ export interface ScopedTag {
   scope: TagScope
 }
 
-
 export function addTags(list: ScopedTag[], text: string, scope: TagScope = 'note'): ScopedTag[] {
   const have = new Set(list.map((t) => t.tag))
   const added = parseTags(text).filter((t) => !have.has(t))
   return [...list, ...added.map((tag) => ({ tag, scope }))]
 }
-
-
-
-
 
 export function TagEditor({
   value,
@@ -95,7 +90,7 @@ export function TagEditor({
         value={pending}
         onChange={(e) => {
           const v = e.target.value
-          
+
           if (/[,\s]$/.test(v) && v.trim()) {
             onChange(add(v))
             onPendingChange('')

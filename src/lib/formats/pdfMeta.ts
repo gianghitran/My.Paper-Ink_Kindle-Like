@@ -5,7 +5,7 @@ import { makeThumbnail, titleFromFileName, type ExtractedMetadata } from './inde
 const JUNK_TITLE = /^(untitled|microsoft word|document\d*|title|unknown|\s*)$|\.(docx?|tex|dvi|pdf|indd|ps)$|^microsoft word -/i
 
 export async function extractPdfMetadata(data: ArrayBuffer, fileName: string): Promise<ExtractedMetadata> {
-  
+
   const pdf = await openPdf(new Uint8Array(data.slice(0)))
   try {
     let title: string | undefined
@@ -18,7 +18,7 @@ export async function extractPdfMetadata(data: ArrayBuffer, fileName: string): P
       author = (md?.get('dc:creator') as string | undefined) || (info.Author as string | undefined)
       if (Array.isArray(author)) author = author.join(', ')
     } catch {
-      
+
     }
     title = typeof title === 'string' ? title.trim() : undefined
     author = typeof author === 'string' ? author.trim() : undefined
@@ -36,7 +36,7 @@ export async function extractPdfMetadata(data: ArrayBuffer, fileName: string): P
       const canvas = document.createElement('canvas')
       canvas.width = Math.round(viewport.width)
       canvas.height = Math.round(viewport.height)
-      
+
       await page.render({ canvas, viewport, intent: 'print' }).promise
       cover = await makeThumbnail(canvas)
     } catch (err) {
@@ -48,7 +48,6 @@ export async function extractPdfMetadata(data: ArrayBuffer, fileName: string): P
     void pdf.loadingTask.destroy()
   }
 }
-
 
 async function guessTitleFromFirstPage(page: Awaited<ReturnType<Awaited<ReturnType<typeof openPdf>>['getPage']>>) {
   try {

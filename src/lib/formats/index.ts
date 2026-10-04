@@ -7,14 +7,8 @@ export interface ExtractedMetadata {
   cover?: Blob
 }
 
-
-
-
-
-
-
 export interface ConvertResult {
-  
+
   blob: Blob
   meta: ExtractedMetadata
 }
@@ -28,7 +22,7 @@ export interface FormatHandler {
   defaultKind: DocKind
   sniff: (bytes: Uint8Array) => boolean
   extract: (data: ArrayBuffer, fileName: string) => Promise<ExtractedMetadata>
-  
+
   convert?: (data: ArrayBuffer, fileName: string) => Promise<ConvertResult>
 }
 
@@ -55,7 +49,7 @@ export const FORMAT_HANDLERS: FormatHandler[] = [
     extensions: ['.pdf'],
     mimeTypes: ['application/pdf'],
     defaultKind: 'paper',
-    
+
     sniff: (bytes) => {
       const head = new TextDecoder('latin1').decode(bytes.subarray(0, 1024))
       return head.includes('%PDF-')
@@ -69,7 +63,7 @@ export const FORMAT_HANDLERS: FormatHandler[] = [
     extensions: ['.epub'],
     mimeTypes: ['application/epub+zip'],
     defaultKind: 'book',
-    
+
     sniff: (bytes) => startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]),
     extract: async (data, fileName) => (await import('./epubMeta')).extractEpubMetadata(data, fileName),
   },
@@ -139,7 +133,6 @@ export const FORMAT_HANDLERS: FormatHandler[] = [
   },
 ]
 
-
 export function formatLabel(source: SourceFormat | undefined, format: DocFormat) {
   return (source ?? format).toUpperCase()
 }
@@ -151,14 +144,14 @@ export const ACCEPT_ATTR = [
 
 export function detectFormat(file: File, bytes: Uint8Array): FormatHandler | null {
   const name = file.name.toLowerCase()
-  
+
   const byExt = [...FORMAT_HANDLERS]
     .filter((h) => h.extensions.some((e) => name.endsWith(e)))
     .sort((a, b) => Math.max(...b.extensions.map((e) => (name.endsWith(e) ? e.length : 0))) - Math.max(...a.extensions.map((e) => (name.endsWith(e) ? e.length : 0))))[0]
   if (byExt && byExt.sniff(bytes)) return byExt
   const byMime = FORMAT_HANDLERS.find((h) => h.mimeTypes.includes(file.type))
   if (byMime && byMime.sniff(bytes)) return byMime
-  
+
   if (FORMAT_HANDLERS[0].sniff(bytes)) return FORMAT_HANDLERS[0]
   return null
 }
@@ -174,7 +167,6 @@ export function titleFromFileName(fileName: string) {
     .replace(/\s+/g, ' ')
     .trim()
 }
-
 
 export async function makeThumbnail(source: CanvasImageSource & { width: number; height: number }, maxW = 360) {
   const scale = Math.min(1, maxW / source.width)

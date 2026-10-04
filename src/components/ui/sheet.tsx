@@ -16,10 +16,6 @@ const sideClass: Record<Side, string> = {
   left: 'anim-slide-right inset-y-0 left-0 h-full w-[min(360px,88vw)] border-r pt-safe pb-safe pl-safe',
 }
 
-
-
-
-
 export function SheetContent({
   side = 'bottom',
   title,

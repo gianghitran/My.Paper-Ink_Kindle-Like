@@ -7,7 +7,7 @@ const DAY = 86_400_000
 export async function saveWord(input: { word: string; lang?: string; definition?: string; context?: string; docId?: string; anchor?: Anchor }) {
   const existing = await db.vocab.where('word').equals(input.word.toLowerCase()).first()
   if (existing) {
-    
+
     await db.vocab.update(existing.id, {
       context: input.context ?? existing.context,
       definition: input.definition ?? existing.definition,
@@ -20,7 +20,6 @@ export async function saveWord(input: { word: string; lang?: string; definition?
   await db.vocab.add(w)
   return w.id
 }
-
 
 export async function reviewWord(w: VocabWord, remembered: boolean) {
   const interval = remembered ? (w.intervalDays ? Math.round(w.intervalDays * 2.2 + 0.5) : 1) : 0
