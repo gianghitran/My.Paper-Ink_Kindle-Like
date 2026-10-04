@@ -38,6 +38,15 @@ export function registerServiceWorker() {
   void import('virtual:pwa-register').then(({ registerSW }) => {
     registerSW({
       immediate: true,
+      onRegisteredSW(_url, registration) {
+        if (!registration) return
+        const check = () => {
+          if (navigator.onLine && registration.installing == null) void registration.update().catch(() => {})
+        }
+        document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check())
+        window.addEventListener('pageshow', (e) => e.persisted && check())
+        setInterval(check, 30 * 60 * 1000)
+      },
       onOfflineReady() {
         toast.success('PaperInk is ready to work offline.')
       },
