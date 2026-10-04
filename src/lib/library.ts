@@ -19,7 +19,7 @@ export async function importFile(file: File): Promise<ImportResult> {
     const buffer = await file.arrayBuffer()
     const handler = detectFormat(file, new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 1024)))
     if (!handler) {
-      return { status: 'error', fileName: file.name, message: 'Unsupported file type. PaperInk reads PDF, EPUB, FB2, TXT, Markdown, HTML and CBZ/CBT comics.' }
+      return { status: 'error', fileName: file.name, message: 'Unsupported file type. PaperInk reads PDF, EPUB, MOBI, FB2, TXT, Markdown, HTML and CBZ/CBT comics.' }
     }
     const contentHash = await sha256Hex(buffer)
     const existing = await db.documents.where('contentHash').equals(contentHash).first()
@@ -27,11 +27,13 @@ export async function importFile(file: File): Promise<ImportResult> {
 
     let meta: Awaited<ReturnType<typeof handler.extract>> = {}
     let stored: Blob | null = null
+    let converted: { format?: DocumentRecord['format']; mimeType?: string; extension?: string } = {}
     try {
       if (handler.convert) {
         const r = await handler.convert(buffer, file.name)
         stored = r.blob
         meta = r.meta
+        converted = { format: r.format, mimeType: r.mimeType, extension: r.extension }
       } else meta = await handler.extract(buffer, file.name)
     } catch (err) {
       console.error('Metadata extraction failed', err)
@@ -43,15 +45,15 @@ export async function importFile(file: File): Promise<ImportResult> {
       return { status: 'error', fileName: file.name, message: `This ${handler.label} file could not be read: ${(err as Error)?.message ?? 'unknown error'}` }
     }
 
-    const mimeType = stored ? 'application/epub+zip' : handler.mimeTypes[0]
+    const mimeType = stored ? (converted.mimeType ?? 'application/epub+zip') : handler.mimeTypes[0]
     const blob = stored ? new Blob([stored], { type: mimeType }) : new Blob([buffer], { type: mimeType })
     const id = uid()
-    const storedName = stored ? `${titleFromFileName(file.name) || 'book'}.epub` : file.name
+    const storedName = stored ? `${titleFromFileName(file.name) || 'book'}${converted.extension ?? '.epub'}` : file.name
     const doc: DocumentRecord = {
       id,
       contentHash,
       filePath: await objectPath(id, storedName),
-      format: handler.format,
+      format: converted.format ?? handler.format,
       sourceFormat: handler.source,
       kind: handler.defaultKind,
       title: (meta.title || titleFromFileName(file.name) || 'Untitled').slice(0, 500),

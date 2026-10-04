@@ -1,6 +1,6 @@
 export type DocFormat = 'pdf' | 'epub' | 'comic'
 
-export type SourceFormat = 'pdf' | 'epub' | 'txt' | 'md' | 'html' | 'fb2' | 'cbz' | 'cbt'
+export type SourceFormat = 'pdf' | 'epub' | 'txt' | 'md' | 'html' | 'fb2' | 'cbz' | 'cbt' | 'mobi'
 
 export interface NormBox {
   x: number

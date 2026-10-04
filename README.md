@@ -14,6 +14,7 @@ https://gianghitran.github.io/My.Paper-Ink_Kindle-Like
 | PDF | page engine (pdf.js) | original layout, text selection, margin trimming |
 | EPUB | reflow engine (epub.js) | typography, pagination, CFI highlights |
 | FB2 / FB2.ZIP, TXT, Markdown, HTML | converted to EPUB on import | reflowable with all EPUB features; FB2 footnotes become popups; TXT chapters detected (e.g. "Chapter", "Chương", "第…章"), encoding detected |
+| MOBI / PRC / AZW (MOBI 6, DRM-free) | converted on import (KOReader / crengine approach) | books become EPUB (chapters from page breaks, linked table of contents, images, cover); comics and manga (e.g. KindleComicConverter files) become CBZ pages. KF8-only AZW3 and DRM files are rejected with a message |
 | CBZ / CBT comics | page engine | zoom, book mode, manga right-to-left, Pencil ink |
 
 PaperInk targets **desktop browsers, phones and iPadOS** (installable PWA). Device features of dedicated e-readers (frontlight, e-ink refresh, SSH…) are out of scope.
@@ -50,6 +51,22 @@ PaperInk targets **desktop browsers, phones and iPadOS** (installable PWA). Devi
 ## Highlight and note module: an application of KOReader
 
 The in-book highlight and note module applies the annotation model of [KOReader](https://github.com/koreader/koreader) (AGPL-3.0). It is a re-implementation in TypeScript for pdf.js and epub.js.
+
+## MOBI reader: an application of KOReader
+
+MOBI support follows how [KOReader](https://github.com/koreader/koreader) opens MOBI through its crengine document engine (`crengine/src/pdbfmt.cpp`). It is re-implemented in TypeScript ([`src/lib/formats/mobi.ts`](src/lib/formats/mobi.ts), [`mobiBook.ts`](src/lib/formats/mobiBook.ts)) from the public MOBI format description; no KOReader or crengine code is copied.
+
+1. **Palm database:** read the record table, then record 0 (PalmDOC header, MOBI header and EXTH metadata: title, author, language, cover, fixed-layout flag).
+2. **Text:** decompress each text record (none, PalmDOC LZ77 or HUFF/CDIC). Before decompressing, strip the trailing entries (multibyte and TBS bytes), then join the records into one MOBI 6 HTML stream, like crengine's PDB stream.
+3. **HTML to book:**
+   - `<mbp:pagebreak>` splits chapters;
+   - `filepos` links become anchors, so the book's table of contents works;
+   - `recindex` images are taken from the image records.
+
+   PaperInk then turns the stream into an EPUB, so highlights, notes, search and the KOReader highlight model work as for any EPUB.
+4. **Comics:** a fixed-layout or comic MOBI becomes a CBZ, with pages in reading order, and opens in the comic page engine.
+
+Like crengine, only MOBI 6 is read. Combined MOBI 6 + KF8 files work through their MOBI 6 part. KF8-only AZW3 and DRM-protected files are rejected with an explanation.
 
 ## Development
 

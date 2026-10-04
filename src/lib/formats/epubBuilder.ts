@@ -41,6 +41,8 @@ img { max-width: 100%; height: auto; }
 .note-title { font-weight: bold; }
 `
 
+export const chapterFile = (i: number) => `ch${String(i + 1).padStart(4, '0')}.xhtml`
+
 function xhtmlFor(title: string, lang: string, nodes: Node[]) {
   const doc = document.implementation.createHTMLDocument(title)
   const holder = doc.createElement('div')
@@ -76,7 +78,7 @@ export async function buildEpub(input: BuildInput): Promise<Blob> {
   let spine = ''
   let navItems = ''
   chapters.forEach((c, i) => {
-    const file = `ch${String(i + 1).padStart(4, '0')}.xhtml`
+    const file = chapterFile(i)
     zip.file(`OEBPS/${file}`, xhtmlFor(c.title, lang, c.body))
     manifest += `<item id="c${i}" href="${file}" media-type="application/xhtml+xml"/>`
     spine += `<itemref idref="c${i}"/>`

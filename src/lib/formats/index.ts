@@ -11,6 +11,9 @@ export interface ConvertResult {
 
   blob: Blob
   meta: ExtractedMetadata
+  format?: DocFormat
+  mimeType?: string
+  extension?: string
 }
 
 export interface FormatHandler {
@@ -97,6 +100,20 @@ export const FORMAT_HANDLERS: FormatHandler[] = [
     sniff: (bytes) => isZip(bytes) || headText(bytes).includes('<fictionbook'),
     extract: async () => ({}),
     convert: (data, fileName) => epubFromConvert(async () => (await import('./fb2')).convertFb2(data, fileName)),
+  },
+  {
+    format: 'epub',
+    source: 'mobi',
+    label: 'MOBI',
+    extensions: ['.mobi', '.prc', '.pdb', '.azw', '.azw3'],
+    mimeTypes: ['application/x-mobipocket-ebook', 'application/vnd.amazon.ebook'],
+    defaultKind: 'book',
+    sniff: (bytes) => ['BOOKMOBI', 'TEXtREAd'].includes(new TextDecoder('latin1').decode(bytes.subarray(60, 68))),
+    extract: async () => ({}),
+    convert: async (data, fileName) => {
+      const r = await (await import('./mobiBook')).convertMobi(data, fileName)
+      return r.format === 'comic' ? r : epubFromConvert(async () => r)
+    },
   },
   {
     format: 'epub',
