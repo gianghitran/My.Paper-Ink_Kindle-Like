@@ -16,13 +16,28 @@ Node 20+ is recommended (CI uses Node 22).
 | --- | --- |
 | `VITE_SUPABASE_URL` | `https://[YOUR_].supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | the project's **anon / publishable** key (Dashboard → Project Settings → API) |
+| `VITE_FILES_URL` | URL of the `paperink-files` Worker, e.g. `https://paperink-files.<subdomain>.workers.dev`. Leave it empty to keep using the Supabase Storage bucket |
+| `VITE_TURNSTILE_SITE_KEY` | public **site key** of the Cloudflare Turnstile widget. |
+
+All four are public values that end up in the JavaScript bundle. Secrets (`service_role`, the Turnstile secret key, `FILES_PURGE_SECRET`) never go into `.env.local` or GitHub: they live in Supabase or Cloudflare only.
 
 ## Deploy to GitHub Pages
 
 1. Push this project to a GitHub repository with a `main` branch.
 2. In the repository, open **Settings → Pages → Build and deployment** and set **Source** to **GitHub Actions**.
-3. Under **Settings → Secrets and variables → Actions**, add the variable `VITE_SUPABASE_URL` = `https://[YOUR_].supabase.co` and the secret `VITE_SUPABASE_ANON_KEY` = your anon/publishable key.
-4. Push to `main`. `.github/workflows/deploy.yml` builds and deploys to `https://<username>.github.io/<repository>/`.
+3. Under **Settings → Secrets and variables → Actions → Variables**, add:
+   - `VITE_SUPABASE_URL` = `https://[YOUR_].supabase.co`
+   - `VITE_SUPABASE_ANON_KEY` = your anon/publishable key (a secret of that name also works)
+   - `VITE_FILES_URL` = the Worker URL (see *Cloudflare R2 file storage*)
+   - `VITE_TURNSTILE_SITE_KEY` = the Turnstile site key (optional)
+
+   Variables are read at **build** time: after adding or changing one, push a commit or use **Actions → Deploy to GitHub Pages → Run workflow**. The workflow only builds the code that is already pushed to `main`, so a new variable does nothing until the code that uses it is pushed too.
+4. Push to `main`. `.github/workflows/deploy.yml` runs:
+   1. `npm ci`;
+   2. **Audit dependencies:** `npm audit --audit-level=high` for the app and the Worker. A High or Critical advisory stops the deploy; fix it with `npm update`, or with an `overrides` entry like the one for `@xmldom/xmldom`.
+   3. checks the Supabase variables, type-checks and builds;
+   4. deploys to `https://<username>.github.io/<repository>/`.
+5. Installed apps and open tabs keep the previous version until the service worker updates: it checks when the app is opened or brought to the foreground and every 30 minutes, then reloads by itself. To be sure you test the new build, close every PaperInk tab, open it again and hard-reload (Ctrl+Shift+R).
 
 The workflow sets `BASE_PATH=/<repository>/`, or `/` for `<username>.github.io` repositories. Vite uses it as `base`, so the assets, the pdf.js worker, CMaps and fonts, the manifest, the icons and the service worker all resolve under that sub-path. When `BASE_PATH` is not set, the build uses a relative base (`./`) and works from any folder. Routing uses `HashRouter`, so refreshing any page never hits a GitHub Pages 404.
 
@@ -48,6 +63,17 @@ The workflow sets `BASE_PATH=/<repository>/`, or `/` for `<username>.github.io` 
    1. Cloudflare dashboard → **Turnstile** → *Add widget*, with your GitHub Pages hostname (plus `localhost` for local tests). Copy the **site key** and the **secret key**.
    2. GitHub → **Settings → Secrets and variables → Actions → Variables**: add `VITE_TURNSTILE_SITE_KEY` (the site key is public). Put the same line in `.env.local`. Push and wait for the deploy; the sign-in, sign-up and change-password forms then show the check.
    3. Only after that deploy is live: Supabase → **Auth → Attack Protection → Enable CAPTCHA protection**, provider *Turnstile*, paste the **secret key**. Doing this before the deploy blocks every password sign-in.
+
+   Details for each step:
+   - **Widget** (Cloudflare → *Application security → Turnstile → Add widget*):
+     - hostnames `<username>.github.io` (no scheme, no path) and `localhost`;
+     - mode **Managed**, pre-clearance **No**.
+
+     The **site key** is public; the **secret key** goes only into Supabase. LAN IP addresses can't be widget hostnames, so once CAPTCHA is on, password sign-in only works on github.io and `localhost`.
+   - **Check before enabling.** After the deploy, close every PaperInk tab, reopen the site and hard-reload. *Sign in*, *Create account* and *Change password* must show the Cloudflare box ("Verifying…" → "Success!"), and signing in must work: Supabase still ignores the token at this point. Also check the deployed page source: the `Content-Security-Policy` meta must list `https://challenges.cloudflare.com`.
+   - **Error `captcha protection: request disallowed (no captcha_token found)`.** Supabase requires CAPTCHA, but the running app sends no token: the Turnstile code isn't deployed yet, `VITE_TURNSTILE_SITE_KEY` was missing at build time, or the browser still runs an old cached version. Turn **Enable CAPTCHA protection** off at once (password sign-in works again immediately), fix the deploy, check again, then turn it back on.
+   - **Error `The anti-bot check failed or expired`.** The secret key in Supabase doesn't belong to the widget of the site key, or the hostname isn't listed in the widget.
+   - Google sign-in is never affected by the CAPTCHA.
 
 ## Cloudflare R2 file storage (once)
 
@@ -76,11 +102,14 @@ Without `VITE_FILES_URL` the app keeps using the Supabase Storage bucket, so not
 
 **Local development.** `cd workers/files && npm run dev` starts the Worker on port 8787 with a local, on-disk R2. Put `FILES_PURGE_SECRET=<random hex>` in `workers/files/.dev.vars` (git-ignored) and `VITE_FILES_URL=http://localhost:8787` in `.env.local`.
 
+**Updating the Worker.** Any change under `workers/files` (code or `wrangler.toml`: rate limits, `ALLOWED_ORIGINS`, `preview_urls`) only takes effect after `cd workers/files && npm run deploy`; pushing to GitHub doesn't deploy the Worker. `npx wrangler tail paperink-files` streams live requests (useful to check that uploads reach R2).
+
 Limits enforced by the Worker:
 - no size limit per file (R2 allows up to 10,000 parts of 50 MB, about 488 GB);
 - PDF, EPUB, comic and JPEG types only;
 - no overwrites;
-- files over 90 MB are uploaded in 50 MB parts, because of the Workers request-size limit.
+- files over 90 MB are uploaded in 50 MB parts, because of the Workers request-size limit;
+- rate limits: 600 requests per minute per IP and 300 per minute per user, after which it returns `429`. Tune them in `[[ratelimits]]` in `wrangler.toml`.
 
 Username accounts are stored by Supabase Auth as `<username>@users.paperink.invalid` — the reserved `.invalid` domain can never receive mail, so no email is ever sent and passwords are only handled by Supabase. A forgotten username password can't be recovered by email; Google accounts are managed by Google.
 
@@ -90,6 +119,8 @@ Username accounts are stored by Supabase Auth as `<username>@users.paperink.inva
 src/
   lib/            db (cloud tables + row mappers), library (document service: import/delete),
                   annotations, graph, wikilinks, backup (JSON/Markdown), pwa, formats/ (format registry)
+    formats/      format handlers: pdfMeta, epubMeta, comic/comicDoc, fb2, textFormats, mobi + mobiBook,
+                  epubBuilder, sanitize (EPUB hardening)
     supabase/     client (anon key from env, PKCE auth)
     cloud/        table (in-memory session cache), sync (debounced write queue), session (load/sign-out),
                   useLiveQuery
@@ -99,14 +130,30 @@ src/
     reader/       ReaderPage (shell, persistence, panels, annotation actions)
       pdf/        PdfReader (virtualized pages, zoom gestures, selection) + PdfPage (canvas/text/links)
       epub/       EpubReader (epub.js rendition, typography injection, CFI highlights)
+    auth/         Captcha (Cloudflare Turnstile, enabled by VITE_TURNSTILE_SITE_KEY)
     graph/, notes/, library/, layout/, ui/ (shadcn-style primitives on Radix)
   pages/          Library, Notes, Graph, Settings, AuthPages (sign in / create account / change password)
+  main.tsx        boot; refuses to start inside another site's frame
+vite.config.ts    build config, PWA, build-time Content-Security-Policy
+workers/files/    Cloudflare Worker in front of R2 (auth check, per-user keys, multipart, rate limits, purge)
+edge-functions/   purge-user (Supabase Edge Function: deletes a removed user's files and auth account)
+sql/              one-off migrations to run in the Supabase SQL Editor
 ```
 
 - **Document identity**: each document has a random UUID; the file's SHA-256 (`content_hash`, unique per user) detects duplicates. Files live at `{user_id}/{document_id}/{filename}` in the R2 bucket (older files: the same path in the Supabase `documents` bucket until they are moved). Restoring a JSON backup re-attaches annotations to documents already in your library by content hash.
 - **Persistence**: Supabase is the source of truth for all app data. The client keeps the signed-in user's rows in memory for the session (wiped on sign-out). The one exception is an **on-device file cache** (IndexedDB, `src/lib/services/deviceCache.ts`) holding downloaded book files and covers, so each book is downloaded once per device instead of on every visit (saves egress). It is bound to one account (wiped when another user signs in, on sign-out and on *Erase all data*), prunes files of documents deleted elsewhere, and evicts least-recently-used files beyond 2 GB / 60 % of the browser quota. Settings → Cloud library shows its size and can clear it. Supabase Auth keeps its session token in localStorage so you stay signed in.
 - **Adding formats** (AZW3/KF8, DjVu…): register a handler in `src/lib/formats/index.ts`. Reflowable formats should `convert` to EPUB (see `textFormats.ts`, `fb2.ts`). Page-image formats can reuse the page engine through an adapter like `comicDoc.ts`.
 - **Performance**: only the pages near the viewport have canvases and text layers. Canvases are released when pages scroll away and are capped in pixel size for iOS. The PDF reader, EPUB reader, knowledge graph, Markdown and settings are lazy-loaded chunks.
+
+## Release checklist
+
+The order matters when a release touches several services:
+
+1. **SQL first.** Run new files from `sql/` in the Supabase SQL Editor before pushing code that needs them; otherwise inserts fail with check-constraint errors. Example: `mobi-format.sql` before importing MOBI.
+2. **Worker.** `cd workers/files && npm run deploy` when `workers/files` changed.
+3. **App.** Commit and push to `main`, then wait for the green ✓ in **Actions**. A red *Audit dependencies* step means a vulnerable dependency.
+4. **Check the live site** after closing every tab and hard-reloading: sign in, open a PDF, an EPUB and a comic, import a file.
+5. **Then switch on server-side features** that need the new app version, such as CAPTCHA in Supabase. If anything breaks, switch them off first and investigate afterwards.
 
 ## Security and privacy
 
