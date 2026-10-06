@@ -135,5 +135,19 @@ export function truncate(s: string, n: number) {
   return t.length > n ? `${t.slice(0, n - 1)}…` : t
 }
 
+export const isWebKitEngine = () =>
+  typeof navigator !== 'undefined' &&
+  /AppleWebKit\//.test(navigator.userAgent) &&
+  !/(Chrome|Chromium|Edg|OPR|SamsungBrowser)\//.test(navigator.userAgent)
+
+export function framedByAnotherSite() {
+  if (typeof window === 'undefined' || window.top === window.self) return false
+  try {
+    return window.top!.location.origin !== window.location.origin
+  } catch {
+    return true
+  }
+}
+
 export const isCoarsePointer = () =>
   typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches

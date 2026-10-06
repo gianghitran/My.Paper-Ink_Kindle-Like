@@ -74,7 +74,8 @@ export function authMessage(err: { message?: string; code?: string } | null | un
   if (/invalid login credentials/i.test(m)) return 'Username or password is incorrect.'
   if (/email not confirmed/i.test(m)) return 'This account isn’t active yet: “Confirm email” must be turned off in the Supabase project.'
   if (/rate limit|too many/i.test(m)) return 'Too many attempts. Please wait a minute and try again.'
-  if (/already registered|already exists/i.test(m)) return 'That username is taken. Try another one.'
+  if (/already registered|already exists/i.test(m)) return 'We couldn’t create an account with that username. Try a different one.'
+  if (/captcha/i.test(m)) return 'The anti-bot check failed or expired. Complete it again and retry.'
   if (/password should|weak password|password is known/i.test(m)) return m
   if (/same password|different from the old/i.test(m)) return 'Choose a password different from your current one.'
   if (/provider is not enabled|unsupported provider/i.test(m)) return 'Google sign-in isn’t enabled on the server yet.'
@@ -83,20 +84,20 @@ export function authMessage(err: { message?: string; code?: string } | null | un
   return m.replace(PLACEHOLDER, '') || 'Something went wrong. Please try again.'
 }
 
-export async function signUpWithUsername(username: string, password: string) {
+export async function signUpWithUsername(username: string, password: string, captchaToken?: string) {
   const name = normalizeUsername(username)
   const { data, error } = await supabase.auth.signUp({
     email: loginEmail(name),
     password,
-    options: { data: { username: name } },
+    options: { data: { username: name }, captchaToken },
   })
   if (error) throw error
 
   if (!data.session) throw new Error('Email not confirmed')
 }
 
-export async function signIn(identifier: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email: loginEmail(identifier), password })
+export async function signIn(identifier: string, password: string, captchaToken?: string) {
+  const { error } = await supabase.auth.signInWithPassword({ email: loginEmail(identifier), password, options: { captchaToken } })
   if (error) throw error
 }
 
@@ -116,10 +117,10 @@ export async function signOut() {
   if (error) throw error
 }
 
-export async function changePassword(currentPassword: string, newPassword: string) {
+export async function changePassword(currentPassword: string, newPassword: string, captchaToken?: string) {
   const email = useAuth.getState().user?.email
   if (!email) throw new Error('Not signed in')
-  const check = await supabase.auth.signInWithPassword({ email, password: currentPassword })
+  const check = await supabase.auth.signInWithPassword({ email, password: currentPassword, options: { captchaToken } })
   if (check.error) throw new Error(/invalid login/i.test(check.error.message) ? 'Current password is incorrect.' : check.error.message)
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) throw error

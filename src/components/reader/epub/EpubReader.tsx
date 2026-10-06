@@ -9,6 +9,7 @@ import { buildEpubCss } from './epubStyles'
 import { hardenEpubSection } from '@/lib/formats/sanitize'
 import { hitBoxes, paintView, type VisibleBox } from './annotationLayer'
 import { adjustRange } from '../rangeEdit'
+import { isWebKitEngine } from '@/lib/utils'
 
 const STYLE_ID = 'paperink-style'
 
@@ -355,7 +356,7 @@ const EpubReader = forwardRef<ReaderHandle, ReaderProps>(function EpubReader(pro
       spread: twoUp ? 'auto' : 'none',
       minSpreadWidth: twoUp ? 0 : 100000,
 
-      allowScriptedContent: true,
+      allowScriptedContent: isWebKitEngine(),
     })
     renditionRef.current = r
     visibleBoxes.current = new Map()

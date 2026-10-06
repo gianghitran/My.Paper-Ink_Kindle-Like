@@ -7,6 +7,7 @@ import { applyChromeColor, applyInkFilter, applyTheme, useSettings } from './sto
 import { consumeAuthRedirect, startAuth } from './lib/services/auth'
 import { useAuthFlash } from './pages/AuthPages'
 import { registerServiceWorker } from './lib/pwa'
+import { framedByAnotherSite } from './lib/utils'
 
 window.addEventListener('vite:preloadError', (event) => {
   if (sessionStorage.getItem('paperink:chunk-reload')) return
@@ -41,4 +42,11 @@ async function boot() {
   registerServiceWorker()
 }
 
-void boot()
+if (framedByAnotherSite()) {
+  const link = document.createElement('a')
+  link.href = window.location.href
+  link.target = '_top'
+  link.rel = 'noopener'
+  link.textContent = 'Open PaperInk in its own tab'
+  document.getElementById('root')!.replaceChildren(link)
+} else void boot()

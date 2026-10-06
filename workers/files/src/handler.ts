@@ -34,8 +34,14 @@ interface R2Bucket {
   resumeMultipartUpload(key: string, uploadId: string): R2MultipartUpload
 }
 
+interface RateLimit {
+  limit(options: { key: string }): Promise<{ success: boolean }>
+}
+
 export interface Env {
   BUCKET: R2Bucket
+  IP_LIMITER?: RateLimit
+  USER_LIMITER?: RateLimit
   SUPABASE_URL: string
   SUPABASE_PUBLISHABLE_KEY: string
   ALLOWED_ORIGINS: string
@@ -153,6 +159,12 @@ export async function purgePrefix(bucket: R2Bucket, userId: string) {
   return removed
 }
 
+function tooMany(cors: Headers) {
+  const h = new Headers(cors)
+  h.set('Retry-After', '60')
+  return json(429, { error: 'too many requests' }, h)
+}
+
 function contentLength(req: Request) {
   const n = Number(req.headers.get('content-length'))
   return Number.isFinite(n) && n > 0 ? n : 0
@@ -171,9 +183,12 @@ export async function handle(req: Request, env: Env, fetcher: AuthFetch = fetch)
     return json(200, { removed: await purgePrefix(env.BUCKET, body.user_id) })
   }
 
+  const ip = req.headers.get('cf-connecting-ip') ?? 'unknown'
+  if (env.IP_LIMITER && !(await env.IP_LIMITER.limit({ key: ip })).success) return tooMany(cors)
   const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
   const userId = await userFromToken(token, env, fetcher)
   if (!userId) return json(401, { error: 'unauthorized' }, cors)
+  if (env.USER_LIMITER && !(await env.USER_LIMITER.limit({ key: userId })).success) return tooMany(cors)
 
   if (url.pathname === '/delete' && req.method === 'POST') {
     const body = (await req.json().catch(() => null)) as { keys?: unknown } | null

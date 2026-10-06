@@ -18,6 +18,7 @@ import {
   usernameProblem,
 } from '@/lib/services/auth'
 import { supabaseConfigured } from '@/lib/supabase/client'
+import { useCaptcha } from '@/components/auth/Captcha'
 import { cn } from '@/lib/utils'
 
 export const useAuthFlash = create<{ notice: string | null; error: string | null }>(() => ({ notice: null, error: null }))
@@ -160,6 +161,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(flash.error)
+  const captcha = useCaptcha()
   const notice = flash.notice
   const next = safeNext(params.get('next'))
   useEffect(() => {
@@ -183,11 +185,13 @@ export function LoginPage() {
             setError(null)
             if (!username.trim()) return setError('Enter your username.')
             if (!password) return setError('Enter your password.')
+            if (captcha.required && !captcha.token) return setError('Complete the anti-bot check first.')
             setBusy(true)
             try {
-              await signIn(username, password)
+              await signIn(username, password, captcha.token ?? undefined)
             } catch (err) {
               setError(authMessage(err as Error))
+              captcha.reset()
             } finally {
               setBusy(false)
             }
@@ -195,6 +199,7 @@ export function LoginPage() {
         >
           <Field id="username" label="Username" value={username} onChange={setUsername} autoComplete="username" />
           <Field id="password" label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />
+          {captcha.element}
           <Button type="submit" size="lg" disabled={busy}>
             {busy ? 'Signing in…' : 'Sign in'}
           </Button>
@@ -218,6 +223,7 @@ export function SignupPage() {
   const [confirm, setConfirm] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const captcha = useCaptcha()
   const next = safeNext(params.get('next'))
 
   if (status === 'signedIn') return <Navigate to={next} replace />
@@ -239,12 +245,14 @@ export function SignupPage() {
             const problem = usernameProblem(username) ?? passwordProblem(password)
             if (problem) return setError(problem)
             if (password !== confirm) return setError('Passwords don’t match.')
+            if (captcha.required && !captcha.token) return setError('Complete the anti-bot check first.')
             setBusy(true)
             try {
-              await signUpWithUsername(username, password)
+              await signUpWithUsername(username, password, captcha.token ?? undefined)
               toast.success('Welcome to PaperInk!')
             } catch (err) {
               setError(authMessage(err as Error))
+              captcha.reset()
             } finally {
               setBusy(false)
             }
@@ -257,6 +265,7 @@ export function SignupPage() {
           <Field id="password" label="Password" type="password" value={password} onChange={setPassword} autoComplete="new-password" invalid={!!pwProblem} />
           <p className={cn('-mt-2 text-[12px]', pwProblem ? 'text-destructive' : 'text-muted-foreground')}>{pwProblem ?? 'At least 8 characters, with letters and numbers.'}</p>
           <Field id="confirm" label="Confirm password" type="password" value={confirm} onChange={setConfirm} autoComplete="new-password" invalid={!!confirm && confirm !== password} />
+          {captcha.element}
           <Alert kind="info">No email needed — but that also means a forgotten password can’t be recovered. Keep it somewhere safe (a password manager is ideal).</Alert>
           <Button type="submit" size="lg" disabled={busy}>
             {busy ? 'Creating account…' : 'Create account'}
@@ -281,6 +290,7 @@ export function ChangePasswordPage() {
   const [confirm, setConfirm] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const captcha = useCaptcha()
 
   if (status === 'loading') {
     return (
@@ -315,13 +325,15 @@ export function ChangePasswordPage() {
           const problem = passwordProblem(password)
           if (problem) return setError(problem)
           if (password !== confirm) return setError('Passwords don’t match.')
+          if (captcha.required && !captcha.token) return setError('Complete the anti-bot check first.')
           setBusy(true)
           try {
-            await changePassword(current, password)
+            await changePassword(current, password, captcha.token ?? undefined)
             toast.success('Password updated')
             navigate('/settings', { replace: true })
           } catch (err) {
             setError(authMessage(err as Error))
+            captcha.reset()
           } finally {
             setBusy(false)
           }
@@ -332,6 +344,7 @@ export function ChangePasswordPage() {
         <Field id="new-password" label="New password" type="password" value={password} onChange={setPassword} autoComplete="new-password" invalid={!!pwProblem} />
         <p className={cn('-mt-2 text-[12px]', pwProblem ? 'text-destructive' : 'text-muted-foreground')}>{pwProblem ?? 'At least 8 characters, with letters and numbers.'}</p>
         <Field id="confirm-password" label="Confirm new password" type="password" value={confirm} onChange={setConfirm} autoComplete="new-password" invalid={!!confirm && confirm !== password} />
+        {captcha.element}
         <Button type="submit" size="lg" disabled={busy}>
           {busy ? 'Saving…' : 'Save password'}
         </Button>

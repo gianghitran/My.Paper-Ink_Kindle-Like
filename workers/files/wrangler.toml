@@ -9,6 +9,16 @@ SUPABASE_URL = "https://jowygcsnfwabaoihkkzt.supabase.co"
 SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TTJWXeQU2naP97Sb8COaSw_j_muT6l7"
 ALLOWED_ORIGINS = "https://gianghitran.github.io,http://localhost:5173,http://localhost:4173,http://localhost:4174,http://192.168.2.177:4173"
 
+[[ratelimits]]
+name = "IP_LIMITER"
+namespace_id = "1001"
+simple = { limit = 600, period = 60 }
+
+[[ratelimits]]
+name = "USER_LIMITER"
+namespace_id = "1002"
+simple = { limit = 300, period = 60 }
+
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "paperink-documents"

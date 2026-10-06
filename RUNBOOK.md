@@ -44,7 +44,10 @@ The workflow sets `BASE_PATH=/<repository>/`, or `/` for `<username>.github.io` 
    - `https://<username>.github.io/<repository>/**`
    - `http://localhost:5173/**`
    - `http://localhost:4173/**` 
-5. **Auth → Rate limits / Attack protection**: keep the default sign-in rate limits; optionally enable CAPTCHA.
+5. **Auth → Rate limits / Attack protection**: keep the default sign-in and sign-up rate limits (lower them if you see abuse). To stop automated sign-ups, enable the Cloudflare Turnstile CAPTCHA:
+   1. Cloudflare dashboard → **Turnstile** → *Add widget*, with your GitHub Pages hostname (plus `localhost` for local tests). Copy the **site key** and the **secret key**.
+   2. GitHub → **Settings → Secrets and variables → Actions → Variables**: add `VITE_TURNSTILE_SITE_KEY` (the site key is public). Put the same line in `.env.local`. Push and wait for the deploy; the sign-in, sign-up and change-password forms then show the check.
+   3. Only after that deploy is live: Supabase → **Auth → Attack Protection → Enable CAPTCHA protection**, provider *Turnstile*, paste the **secret key**. Doing this before the deploy blocks every password sign-in.
 
 ## Cloudflare R2 file storage (once)
 
@@ -108,17 +111,31 @@ src/
 ## Security and privacy
 
 - **Authorization is enforced by Supabase, not the frontend**: every user-owned table has RLS policies `auth.uid() = user_id` for SELECT/INSERT/UPDATE/DELETE (role `authenticated` only; `anon` has no privileges). A trigger forces `user_id := auth.uid()` on insert and rejects any change of `user_id` or `id`, so ownership values sent by a client are ignored and can't be transferred. Composite foreign keys `(document_id, user_id)` stop rows from pointing at another user's document, highlight, note or node. File paths must sit inside the owner's folder.
+- **Content Security Policy**: the build injects a CSP `<meta>` into `index.html`, from `contentSecurityPolicy()` in `vite.config.ts`:
+  - scripts only from the app's own origin, plus WebAssembly for pdf.js and Turnstile when it is configured; no inline scripts, no `eval`;
+  - network access only to the app, Supabase, the files Worker, Wiktionary and Wikipedia;
+  - `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `Referrer-Policy: strict-origin-when-cross-origin`.
+
+  EPUB chapter iframes (`srcdoc`) inherit this policy, in addition to their own per-chapter CSP. GitHub Pages can't send response headers, and browsers ignore `frame-ancestors` in a `<meta>` CSP, so the app refuses to start when another site frames it (`framedByAnotherSite()` in `src/main.tsx`).
 - **Storage**: files are in a private Cloudflare R2 bucket with no public URLs. Only the `paperink-files` Worker can reach it, through its R2 binding. Every request carries the user's Supabase access token, and the Worker:
   - checks the token with Supabase Auth;
   - derives the user id from it, never from the request;
   - only allows keys under `{user_id}/`;
   - requires a document row that RLS shows to the caller before any write.
 
-  Uploads are limited to PDF/EPUB/comic/JPEG types (no size limit), and can't overwrite existing files. The purge endpoint only accepts a server-side shared secret. The legacy Supabase `documents` bucket keeps its policies: private, `{auth.uid()}/…` only, uploads need a matching document row.
+  Uploads are limited to PDF/EPUB/comic/JPEG types (no size limit), and can't overwrite existing files. Requests are rate-limited (Workers Rate Limiting bindings in `wrangler.toml`): 600 per minute per IP before the token check, and 300 per minute per user; over the limit the Worker answers `429`. The purge endpoint only accepts a server-side shared secret. The legacy Supabase `documents` bucket keeps its policies: private, `{auth.uid()}/…` only, uploads need a matching document row.
 - **No roles**: there are no admin/moderator flags or privilege levels. The `service_role` key is never used by the app.
+- Sign-up errors don't say whether a username exists; Turnstile and the Supabase rate limits slow down enumeration and automated sign-ups.
+- The Supabase URL and the publishable key in `wrangler.toml` and the app bundle are public by design: every access is still governed by RLS. No `service_role` key or other secret is in the repository.
+- Dependencies: `@xmldom/xmldom` (used by epub.js only outside browsers) is pinned to a patched release through `overrides`, and CI fails the deploy when `npm audit` reports a High or Critical issue in the app or the Worker.
 - Passwords and tokens are never logged. User-controlled text is length-checked in the UI and by database CHECK constraints.
 - Imported documents are untrusted:
-  - EPUB content renders in sandboxed iframes without `allow-scripts`.
+  - EPUB content renders in sandboxed iframes. Outside WebKit the sandbox is `allow-same-origin` only, with no `allow-scripts`. WebKit (Safari, and every iOS/iPadOS browser) runs no event listener inside a sandboxed frame without `allow-scripts`, so taps, selection and highlights would not work there; on WebKit only, the frame gets `allow-scripts` (`isWebKitEngine()` in `EpubReader.tsx`). On every engine, script execution is still blocked by three independent layers:
+    - every chapter is sanitized by `hardenEpubSection` (no scripts, event handlers or `javascript:` URLs);
+    - every chapter gets its own `script-src 'none'` CSP;
+    - the frame inherits the app CSP (no inline scripts).
+
+    A test that injects a `<script>` and an `onerror` handler straight into a rendered chapter confirms that nothing runs.
   - External EPUB links open with `noopener`.
   - PDF JavaScript and XFA are never run.
   - PDF links are limited to `http(s)`/`mailto`.
