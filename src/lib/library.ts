@@ -105,7 +105,7 @@ export async function getDocumentFile(id: string): Promise<Blob | undefined> {
   const doc = await db.documents.get(id)
   if (!doc?.filePath) return undefined
   try {
-    return await downloadObject(doc.filePath)
+    return await downloadObject(doc.filePath, { allowRemote: doc.format === 'comic' || doc.format === 'pdf' })
   } catch (err) {
     console.warn('Document download failed', (err as Error).message)
     return undefined

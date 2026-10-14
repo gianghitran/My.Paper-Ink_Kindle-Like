@@ -1,23 +1,31 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import { imageSize, listComicPages } from './comic'
+import { imageSize, listComicPagesFromBlob } from './comic'
+import { isRemote } from '@/lib/byteSource'
 
 const UNIT_WIDTH = 900
 const BITMAP_CACHE = 6
+const BYTES_CACHE = 8
+const HEAD_BYTES = 128 * 1024
 
 class RenderingCancelled extends Error {
   name = 'RenderingCancelledException'
 }
 
 export async function openComic(file: Blob): Promise<PDFDocumentProxy> {
-  const pages = await listComicPages(await file.arrayBuffer())
+  const pages = await listComicPagesFromBlob(file)
+  const uniformSizes = isRemote(file)
   if (!pages.length) throw new Error('No images in comic')
   const bytes = new Map<number, Promise<Uint8Array>>()
   const loadBytes = (i: number) => {
     let p = bytes.get(i)
-    if (!p) {
-      p = pages[i].load()
+    if (p) {
+      bytes.delete(i)
       bytes.set(i, p)
+      return p
     }
+    p = pages[i].load()
+    bytes.set(i, p)
+    if (bytes.size > BYTES_CACHE) bytes.delete(bytes.keys().next().value as number)
     return p
   }
   const bitmaps = new Map<number, Promise<ImageBitmap>>()
@@ -35,11 +43,14 @@ export async function openComic(file: Blob): Promise<PDFDocumentProxy> {
     return p
   }
   const sizes = new Map<number, Promise<{ w: number; h: number }>>()
-  const sizeOf = (i: number) => {
+  const sizeOf = (i: number): Promise<{ w: number; h: number }> => {
+    if (uniformSizes && i > 0) return sizeOf(0)
     let p = sizes.get(i)
     if (!p) {
-      p = loadBytes(i).then(async (b) => {
-        let s = imageSize(b)
+      const head = pages[i].loadHead ? pages[i].loadHead!(HEAD_BYTES) : loadBytes(i)
+      p = head.then(async (h) => {
+        let s = imageSize(h)
+        if ((!s || !s.w || !s.h) && pages[i].loadHead) s = imageSize(await loadBytes(i))
         if (!s || !s.w || !s.h) {
           const bm = await bitmap(i)
           s = { w: bm.width, h: bm.height }
@@ -78,7 +89,10 @@ export async function openComic(file: Blob): Promise<PDFDocumentProxy> {
           ctx.imageSmoothingQuality = 'high'
           ctx.fillStyle = '#fff'
           ctx.fillRect(0, 0, vp.width, vp.height)
-          ctx.drawImage(bm, 0, 0, vp.width, vp.height)
+          const fit = Math.min(vp.width / bm.width, vp.height / bm.height)
+          const dw = bm.width * fit
+          const dh = bm.height * fit
+          ctx.drawImage(bm, (vp.width - dw) / 2, (vp.height - dh) / 2, dw, dh)
         })()
         return {
           promise,

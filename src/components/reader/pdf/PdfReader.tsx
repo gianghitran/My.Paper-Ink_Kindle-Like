@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api'
-import { openPdf, pdfjsLib } from '@/lib/pdf/pdfjs'
+import { openPdfBlob, pdfjsLib } from '@/lib/pdf/pdfjs'
 import { adjustRange } from '../rangeEdit'
 import { openComic } from '@/lib/formats/comicDoc'
 import { detectContentBox } from '@/lib/pdf/contentBox'
@@ -150,7 +150,7 @@ const PdfReader = forwardRef<ReaderHandle, PdfReaderProps>(function PdfReader(pr
     let cancelled = false
     let doc: PDFDocumentProxy | null = null
     ;(async () => {
-      doc = propsRef.current.doc.format === 'comic' ? await openComic(file) : await openPdf(new Uint8Array(await file.arrayBuffer()))
+      doc = propsRef.current.doc.format === 'comic' ? await openComic(file) : await openPdfBlob(file)
       if (cancelled) {
         void doc.loadingTask.destroy()
         return

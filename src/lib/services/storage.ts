@@ -1,5 +1,6 @@
-import { getCachedFile, putCachedFile, removeCachedFiles } from './deviceCache'
+import { finishCachedParts, getCachedFile, putCachedFile, putCachedPart, removeCachedFiles, removeCachedParts } from './deviceCache'
 import { FILES_URL, STORAGE_BUCKET, supabase } from '@/lib/supabase/client'
+import { blockCachedSource, joinParts, remoteBlob } from '@/lib/byteSource'
 
 const ALLOWED_TYPES = new Set([
   'application/pdf',
@@ -75,11 +76,46 @@ async function r2Upload(path: string, blob: Blob, contentType: string) {
   }
 }
 
-async function r2Download(path: string): Promise<Blob | null> {
-  const res = await files('/object', { key: path })
-  if (res.status === 404) return null
-  if (!res.ok) throw await filesError(res)
-  return res.blob()
+const DOWNLOAD_CHUNK = 16 * 1024 * 1024
+const REMOTE_MIN_BYTES = 96 * 1024 * 1024
+
+async function rangeBytes(path: string, start: number, end: number) {
+  const res = await files('/object', { key: path }, { headers: { Range: `bytes=${start}-${end - 1}` } })
+  if (res.status !== 206 && res.status !== 200) throw await filesError(res)
+  const data = new Uint8Array(await res.arrayBuffer())
+  return res.status === 200 ? data.subarray(start, end) : data
+}
+
+async function r2Download(path: string, allowRemote: boolean): Promise<{ blob: Blob; cached: boolean } | null> {
+  const range = (start: number, end: number) => files('/object', { key: path }, { headers: { Range: `bytes=${start}-${end - 1}` } })
+  const first = await range(0, DOWNLOAD_CHUNK)
+  if (first.status === 404) return null
+  if (!first.ok) throw await filesError(first)
+  const total = Number(first.headers.get('content-range')?.split('/')[1])
+  const type = first.headers.get('content-type') ?? ''
+  if (first.status !== 206 || !Number.isFinite(total) || total <= DOWNLOAD_CHUNK) return { blob: await first.blob(), cached: false }
+  const parts: Blob[] = []
+  let persisted = true
+  try {
+    for (let start = 0; start < total; start += DOWNLOAD_CHUNK) {
+      const res = start === 0 ? first : await range(start, Math.min(total, start + DOWNLOAD_CHUNK))
+      if (res.status !== 206) throw await filesError(res)
+      const chunk = await res.blob()
+      const stored = persisted ? await putCachedPart(path, parts.length, chunk) : null
+      if (!stored && start === 0 && allowRemote && total >= REMOTE_MIN_BYTES) {
+        const source = blockCachedSource(total, (s, e) => rangeBytes(path, s, e))
+        source.seed(0, new Uint8Array(await chunk.arrayBuffer()))
+        return { blob: remoteBlob(source, type), cached: true }
+      }
+      if (!stored) persisted = false
+      parts.push(stored ?? chunk)
+    }
+  } catch (err) {
+    await removeCachedParts(path, parts.length)
+    throw err
+  }
+  if (persisted) await finishCachedParts(path, parts.length, type, total)
+  return { blob: joinParts(parts, type), cached: persisted }
 }
 
 async function legacyDownload(path: string) {
@@ -121,7 +157,7 @@ function remember(path: string, blob: Blob) {
   }
 }
 
-export async function downloadObject(path: string): Promise<Blob> {
+export async function downloadObject(path: string, opts: { allowRemote?: boolean } = {}): Promise<Blob> {
   const hit = fileCache.get(path)
   if (hit) return hit
   let p = inflight.get(path)
@@ -133,13 +169,11 @@ export async function downloadObject(path: string): Promise<Blob> {
         remember(path, cached)
         return cached
       }
-      let data = FILES_URL ? await r2Download(path) : null
-      if (!data) {
-        data = await legacyDownload(path)
-        if (FILES_URL) void migrateToR2(path, data)
-      }
+      const fromR2 = FILES_URL ? await r2Download(path, !!opts.allowRemote) : null
+      const data = fromR2?.blob ?? (await legacyDownload(path))
+      if (!fromR2 && FILES_URL) void migrateToR2(path, data)
       remember(path, data)
-      void putCachedFile(path, data)
+      if (!fromR2?.cached) void putCachedFile(path, data)
       return data
     })().finally(() => inflight.delete(path))
     inflight.set(path, p)
